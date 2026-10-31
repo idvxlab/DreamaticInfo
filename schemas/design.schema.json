@@ -1,0 +1,272 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "design",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "theme": {
+      "type": "string"
+    },
+    "storyline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "fact_ids",
+          "rationale"
+        ]
+      },
+      "minItems": 1
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "width": {
+          "type": "number",
+          "minimum": 320,
+          "maximum": 3840
+        },
+        "height": {
+          "type": "number",
+          "minimum": 320,
+          "maximum": 20000
+        },
+        "background": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "width",
+        "height",
+        "background"
+      ]
+    },
+    "palette": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "font": {
+      "type": "string"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "heading",
+              "text",
+              "bar",
+              "line",
+              "donut",
+              "metric",
+              "illustration"
+            ]
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height"
+            ]
+          },
+          "mapping": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "label_field": {
+                "type": "string"
+              },
+              "value_field": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label_field",
+              "value_field",
+              "unit"
+            ]
+          },
+          "interaction": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "trigger": {
+                "type": "string"
+              },
+              "behavior": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "trigger",
+              "behavior"
+            ]
+          },
+          "animation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "trigger": {
+                "type": "string"
+              },
+              "behavior": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "trigger",
+              "behavior"
+            ]
+          },
+          "story_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "parent_id",
+          "fact_ids",
+          "title",
+          "description",
+          "layout",
+          "mapping",
+          "interaction",
+          "animation",
+          "story_ids"
+        ]
+      },
+      "minItems": 1
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "style": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "purpose",
+          "width",
+          "height",
+          "style",
+          "prompt"
+        ]
+      }
+    },
+    "narrative_rationale": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "title",
+    "theme",
+    "narrative_rationale",
+    "storyline",
+    "page",
+    "palette",
+    "font",
+    "components",
+    "assets"
+  ]
+}

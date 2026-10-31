@@ -1,0 +1,261 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "datafacts",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "summary": {
+      "type": "string"
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "value",
+              "comparison",
+              "trend",
+              "distribution",
+              "correlation",
+              "proportion",
+              "categorization",
+              "rank",
+              "extreme",
+              "outlier"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "value": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "unit": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "source_id": {
+                  "type": "string"
+                },
+                "quote": {
+                  "type": "string"
+                },
+                "location": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source_id",
+                "quote",
+                "location"
+              ]
+            }
+          },
+          "analysis": {
+            "type": "string"
+          },
+          "context": {
+            "type": "string"
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "importance": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "target_id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "temporal",
+                    "comparison",
+                    "correlation",
+                    "causal",
+                    "contains",
+                    "context"
+                  ]
+                },
+                "basis": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "target_id",
+                "type",
+                "basis"
+              ]
+            }
+          },
+          "confidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "score",
+              "reason"
+            ]
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "label",
+                "value"
+              ]
+            }
+          },
+          "specification": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "scope": {
+                "type": "string",
+                "minLength": 1
+              },
+              "measure": {
+                "type": "string",
+                "minLength": 1
+              },
+              "breakdown": {
+                "type": "string",
+                "minLength": 1
+              },
+              "focus": {
+                "type": "string",
+                "minLength": 1
+              },
+              "method": {
+                "type": "string",
+                "minLength": 1
+              },
+              "aggregation": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "count",
+                  "sum",
+                  "mean",
+                  "median",
+                  "min",
+                  "max",
+                  "distinct_count"
+                ]
+              },
+              "distribution_kind": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "categorical",
+                  "numeric"
+                ]
+              },
+              "calculation_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "series_unit": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "scope",
+              "measure",
+              "breakdown",
+              "focus",
+              "method",
+              "aggregation",
+              "distribution_kind",
+              "calculation_id",
+              "series_unit"
+            ]
+          },
+          "derivation": {
+            "type": "string",
+            "enum": [
+              "quoted",
+              "computed",
+              "inferred",
+              "forecast"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "type",
+          "description",
+          "value",
+          "unit",
+          "evidence",
+          "analysis",
+          "context",
+          "source_ids",
+          "importance",
+          "relations",
+          "confidence",
+          "series",
+          "derivation",
+          "specification"
+        ]
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "summary",
+    "facts"
+  ]
+}

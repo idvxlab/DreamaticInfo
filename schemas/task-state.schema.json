@@ -1,0 +1,300 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "task-state",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "completed", "failed", "interrupted"]
+    },
+    "current_stage": {
+      "type": ["string", "null"],
+      "enum": ["chatbot", "researcher", "analyst", "designer", "builder", null]
+    },
+    "completed": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["chatbot", "researcher", "analyst", "designer", "builder"]
+      }
+    },
+    "pending": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["chatbot", "researcher", "analyst", "designer", "builder"]
+      }
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chatbot": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "running",
+                "completed",
+                "failed",
+                "interrupted"
+              ]
+            },
+            "attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "input_hash": {
+              "type": "string"
+            },
+            "output_hash": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "completed_at": {
+              "type": "string"
+            },
+            "error": {
+              "type": "string"
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "outputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["status", "attempts"]
+        },
+        "researcher": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "running",
+                "completed",
+                "failed",
+                "interrupted"
+              ]
+            },
+            "attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "input_hash": {
+              "type": "string"
+            },
+            "output_hash": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "completed_at": {
+              "type": "string"
+            },
+            "error": {
+              "type": "string"
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "outputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["status", "attempts"]
+        },
+        "analyst": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "running",
+                "completed",
+                "failed",
+                "interrupted"
+              ]
+            },
+            "attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "input_hash": {
+              "type": "string"
+            },
+            "output_hash": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "completed_at": {
+              "type": "string"
+            },
+            "error": {
+              "type": "string"
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "outputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["status", "attempts"]
+        },
+        "designer": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "running",
+                "completed",
+                "failed",
+                "interrupted"
+              ]
+            },
+            "attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "input_hash": {
+              "type": "string"
+            },
+            "output_hash": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "completed_at": {
+              "type": "string"
+            },
+            "error": {
+              "type": "string"
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "outputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["status", "attempts"]
+        },
+        "builder": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "running",
+                "completed",
+                "failed",
+                "interrupted"
+              ]
+            },
+            "attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "input_hash": {
+              "type": "string"
+            },
+            "output_hash": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "completed_at": {
+              "type": "string"
+            },
+            "error": {
+              "type": "string"
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "outputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["status", "attempts"]
+        }
+      },
+      "required": ["chatbot", "researcher", "analyst", "designer", "builder"]
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "last_success_at": {
+      "type": ["string", "null"]
+    },
+    "error": {
+      "type": ["string", "null"]
+    }
+  },
+  "required": [
+    "project_id",
+    "status",
+    "current_stage",
+    "completed",
+    "pending",
+    "stages",
+    "updated_at",
+    "last_success_at",
+    "error"
+  ]
+}

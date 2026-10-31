@@ -1,0 +1,5 @@
+---
+name: information-design
+description: Data storytelling, chart choice, visual encoding, evidence and readable infographic composition.
+---
+从用户目标与事实关联中选择核心故事。以一个信息密度合理的主标题建立认知，再按证据顺序展开。大小/位置编码优先于面积和色相；条形图从零开始，折线图仅用于有序序列，饼/环仅用于非负且构成整体的数据。单位、分母、时间范围和来源保持可见。不要将不相关的事实强行串为因果。用注释突出差异，用留白建立层级。交互帮助比较或显示依据；动画只解释变化。艺术语言服务于信息，不改变数值映射。文字/背景对比充足；响应式阅读路径与打印内容一致。
