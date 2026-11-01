@@ -34,7 +34,7 @@ test("new fact types show separate derivation, statistical scope and series unit
   const html = render({ ...progress, facts: [{ ...progress.facts[0], fact: rank }] });
   for (const text of ["排名", "确定性计算", "名次", "万元", "统计口径与方法", "完整比较集合"]) assert.ok(html.includes(text), text);
   const proportion = { ...rank, type: "proportion" as const, value: 35, unit: "%", derivation: "forecast" as const };
-  assert.match(render({ ...progress, facts: [{ ...progress.facts[0], fact: proportion }] }), /占比 35%/);
+  assert.match(render({ ...progress, facts: [{ ...progress.facts[0], fact: proportion }] }), /占比：35%/);
   assert.match(render({ ...progress, facts: [{ ...progress.facts[0], fact: proportion }] }), /预测/);
 });
 
@@ -44,6 +44,6 @@ test("mixed-unit fact previews keep raw observations without drawing a misleadin
   const html = render({ ...progress, facts: [{ ...progress.facts[0], fact: mixed }] });
   assert.match(html, /混合单位序列，暂不绘制同轴图表/);
   assert.match(html, /Count \(千\)/); assert.match(html, /Rate \(%\)/);
-  assert.doesNotMatch(html, /<svg[^>]+viewBox="0 0 300 100"/);
+  assert.doesNotMatch(html, /data-chart-engine="d3"/);
   assert.match(html, />10</); assert.match(html, />20</);
 });

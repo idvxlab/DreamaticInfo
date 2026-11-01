@@ -294,7 +294,7 @@ try {
       components: [{ id: "heading", type: "heading", parent_id: null, story_ids: [], fact_ids: [], title: "Fixture", description: "Fixture", layout: { x: 0, y: 0, width: 400, height: 200 }, mapping: { label_field: "", value_field: "", unit: "" }, interaction: { trigger: "", behavior: "" }, animation: { trigger: "", behavior: "" } }],
     };
     await store.commit(p, "designer", design, "fixture", "fixture", renderDocument("designer", design, "fixture"));
-    const builder = { html: "<html><head><title>fixture</title></head><body>fixture</body></html>", summary: "fixture" };
+    const builder = { html: `<!doctype html><html><head><meta charset="utf-8"><title>PDF configuration fixture</title></head><body><h1 data-component-id="heading">PDF fixture</h1><p>This isolated test checks the configured browser launch and page-operation timeout. It contains no user material.</p></body></html>`, summary: "fixture" };
     await store.commit(p, "builder", builder, "fixture", "fixture", renderDocument("builder", builder, "fixture"));
     let launch: LaunchOptions | undefined,
       pageTimeout = 0,

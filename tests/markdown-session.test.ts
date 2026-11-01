@@ -210,7 +210,7 @@ try {
   });
   await test("real Pi saves HTML separately from its Markdown delivery report", { timeout: 15000 }, async () => {
     const builder = await store.readArtifact(ready, "builder");
-    scenario([{ name: "save_html", arguments: { html: builder.data.html } }, { name: "submit_stage", arguments: { markdown: builder.markdown } }]);
+    scenario([{ name: "read_visualization_guide", arguments: {} }, { name: "save_html", arguments: { html: builder.data.html } }, { name: "submit_stage", arguments: { markdown: builder.markdown } }]);
     const result = await piRunner(ready, "builder", models.builder, { signal: AbortSignal.timeout(10000), event: () => {} });
     assert.deepEqual(result.data, builder.data);
     assert.ok(!result.markdown!.includes("<!doctype"));

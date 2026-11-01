@@ -1,3 +1,4 @@
+import { RunMetrics } from "./run-metrics.js";
 import { browserOptions } from "./browser.js";
 export { browserOptions } from "./browser.js";
 import { setting } from "./config-store.js";
@@ -17,6 +18,8 @@ export async function exportPdf(
   const design = (await readArtifact(p, "designer"))?.data;
   const timeout = Number(setting("DREAMATIC_PDF_TIMEOUT_MS")),
     started = Date.now();
+  const metrics = new RunMetrics(projectDir(p.id));
+  const endPdf = metrics.span("pdf_export", { builder_version: p.state.stages.builder.version });
   const remaining = () => Math.max(1, timeout - (Date.now() - started));
   let timedOut = false;
   const browser = await driver.launch({
@@ -69,13 +72,16 @@ export async function exportPdf(
     const { writeFile, rename } = await import("node:fs/promises");
     await writeFile(target + ".tmp", buf);
     await rename(target + ".tmp", target);
+    endPdf();
     return target;
   } catch (error) {
+    endPdf("error");
     if (timedOut || Date.now() - started >= timeout)
       throw new Error(`PDF 导出超过配置的总时限（${timeout} 毫秒）`);
     throw error;
   } finally {
     clearTimeout(deadline);
     await browser.close();
+    await metrics.flush();
   }
 }

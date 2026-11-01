@@ -91,6 +91,13 @@ export interface DataFacts {
   facts: Fact[];
 }
 export interface Design {
+  composition?: {
+    task: "statistical" | "comparison" | "temporal" | "process" | "hierarchy" | "spatial" | "relationships" | "explanation" | "guide";
+    reading: "guided" | "exploratory" | "hybrid";
+    medium: "poster" | "responsive" | "interactive" | "scrollytelling";
+    selection_basis: string; communication: string; art_direction: string;
+    layout_rules: string; safe_regions: string; responsive_rules: string; print_rules: string; acceptance: string;
+  };
   narrative_rationale: string;
   title: string;
   theme: string;
@@ -110,6 +117,7 @@ export interface Design {
       "heading" | "text" | "bar" | "line" | "donut" | "metric" | "illustration";
     parent_id: string | null;
     story_ids: string[];
+    asset_ids?: string[];
     fact_ids: string[];
     title: string;
     description: string;
@@ -121,6 +129,7 @@ export interface Design {
   assets: {
     id: string;
     purpose: string;
+    commission?: { semantics: "decorative" | "explanatory" | "data"; content_ids: string[]; placement: string; safe_regions: string; transparent: "required" | "optional" | "opaque"; crop: string; layering: string; factual_boundary: string; acceptance: string; fallback: string };
     width: number;
     height: number;
     style: string;

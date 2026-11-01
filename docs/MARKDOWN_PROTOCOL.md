@@ -82,3 +82,7 @@ Analyst 可先通过 save_analysis_draft 保存 Markdown，使用 patch_analysis
 Data Facts 新增占比/分类/排名/极值/异常，推论不再作为 type；每条事实新增“依据方式”与“统计口径”Markdown 章节。计算记录编号为空写“未提供”；确定性计算使用 calculate 的来源模式并复制其记录、精确结果与口径。模型继续只维护 Markdown，内部计算记录不作为第二份作者业务文档。详见 DATA_FACT_TYPES.md。
 
 Designer 可先用 save_design_draft 分批保存完整模板的 Markdown，未规划的列表写无；patch_design_story 局部修正段落、patch_design_component 局部修正组件，read_design_draft 可按 story_id/component_id 读取单项，reorder_design_stories 调整顺序，最终 submit_stage 可使用 draft_revision。草稿必须明确整体编排依据、每段的选材与顺序理由，以及组件的段落编号列表。详见 [DESIGNER_WORKBENCH.md](DESIGNER_WORKBENCH.md)。
+
+## 整体设计与素材委托扩展
+
+Designer 模板增加整体设计 composition（任务、阅读方式、交付形式、选择依据、内容传播、艺术方向、构图关系、安全区域、媒介适配、打印与验收）。保留坐标布局，同时用正式文字规则表达关系；不把全部页面限制为绝对定位。组件可引用 asset_ids；素材可包含 commission，精确数据编码不得委托图像生成。新增字段对旧文档可省略，但当前模板要求新设计完整填写；旧字段不得省略。新增嵌套素材使用条目章节。详见 INFOGRAPHIC_IMPLEMENTATION.md 的恢复与未实现边界。

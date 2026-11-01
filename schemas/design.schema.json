@@ -200,6 +200,13 @@
               "type": "string"
             },
             "uniqueItems": true
+          },
+          "asset_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
           }
         },
         "required": [
@@ -241,6 +248,74 @@
           },
           "prompt": {
             "type": "string"
+          },
+          "commission": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "semantics": {
+                "type": "string",
+                "enum": [
+                  "decorative",
+                  "explanatory",
+                  "data"
+                ]
+              },
+              "content_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "placement": {
+                "type": "string",
+                "minLength": 1
+              },
+              "safe_regions": {
+                "type": "string",
+                "minLength": 1
+              },
+              "transparent": {
+                "type": "string",
+                "enum": [
+                  "required",
+                  "optional",
+                  "opaque"
+                ]
+              },
+              "crop": {
+                "type": "string",
+                "minLength": 1
+              },
+              "layering": {
+                "type": "string",
+                "minLength": 1
+              },
+              "factual_boundary": {
+                "type": "string",
+                "minLength": 1
+              },
+              "acceptance": {
+                "type": "string",
+                "minLength": 1
+              },
+              "fallback": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "semantics",
+              "content_ids",
+              "placement",
+              "safe_regions",
+              "transparent",
+              "crop",
+              "layering",
+              "factual_boundary",
+              "acceptance",
+              "fallback"
+            ]
           }
         },
         "required": [
@@ -256,6 +331,88 @@
     "narrative_rationale": {
       "type": "string",
       "minLength": 1
+    },
+    "composition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "type": "string",
+          "enum": [
+            "statistical",
+            "comparison",
+            "temporal",
+            "process",
+            "hierarchy",
+            "spatial",
+            "relationships",
+            "explanation",
+            "guide"
+          ]
+        },
+        "reading": {
+          "type": "string",
+          "enum": [
+            "guided",
+            "exploratory",
+            "hybrid"
+          ]
+        },
+        "medium": {
+          "type": "string",
+          "enum": [
+            "poster",
+            "responsive",
+            "interactive",
+            "scrollytelling"
+          ]
+        },
+        "selection_basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "communication": {
+          "type": "string",
+          "minLength": 1
+        },
+        "art_direction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layout_rules": {
+          "type": "string",
+          "minLength": 1
+        },
+        "safe_regions": {
+          "type": "string",
+          "minLength": 1
+        },
+        "responsive_rules": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_rules": {
+          "type": "string",
+          "minLength": 1
+        },
+        "acceptance": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "task",
+        "reading",
+        "medium",
+        "selection_basis",
+        "communication",
+        "art_direction",
+        "layout_rules",
+        "safe_regions",
+        "responsive_rules",
+        "print_rules",
+        "acceptance"
+      ]
     }
   },
   "required": [

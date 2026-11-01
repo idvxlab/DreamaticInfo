@@ -2,8 +2,9 @@
 import type { Role } from "../../../packages/shared/types.js";
 import { schemas, names, validate } from "./validation.js";
 export const DOCUMENT_PROTOCOL = "markdown-v1";
-type Schema = { type: string | string[]; minimum?: number; maximum?: number; properties?: Record<string, Schema>; items?: Schema; enum?: string[] };
+type Schema = { required?: string[]; type: string | string[]; minimum?: number; maximum?: number; properties?: Record<string, Schema>; items?: Schema; enum?: string[] };
 const labels: Record<string, string> = {
+  composition: "整体设计", task: "内容任务", reading: "阅读方式", medium: "交付形式", selection_basis: "选型依据", communication: "内容与传播", art_direction: "艺术方向", layout_rules: "构图关系", safe_regions: "安全区域", responsive_rules: "媒介适配", print_rules: "打印方案", acceptance: "验收要求", commission: "素材委托", semantics: "语义类别", content_ids: "关联内容编号", placement: "主体位置", transparent: "透明要求", crop: "定位裁切", layering: "层叠规则", factual_boundary: "事实边界", fallback: "失败替代", asset_ids: "素材编号列表",
   narrative_rationale: "整体编排依据", rationale: "选材与顺序理由", story_ids: "段落编号列表",
   series_unit: "序列单位", derivation: "依据方式", specification: "统计口径", measure: "度量字段", breakdown: "分组字段", focus: "关注对象", method: "方法", aggregation: "聚合方法", distribution_kind: "分布类别", calculation_id: "计算记录编号",
   intent: "需求报告", research: "调研报告", datafacts: "数据事实报告", design: "逻辑与叙事设计",
@@ -32,7 +33,7 @@ function value(text: string, schema: Schema, where: string): unknown {
 function table(headers: string[], rows: string[][]) { return `| ${headers.join(" | ")} |\n| ${headers.map(() => "---").join(" | ")} |\n${rows.map(row => `| ${row.join(" | ")} |`).join("\n")}\n\n`; }
 function renderNode(data: any, schema: Schema, depth: number): string {
   if (schema.type === "object") {
-    const props = Object.entries(schema.properties!);
+    const props = Object.entries(schema.properties!).filter(([key]) => data[key] !== undefined);
     let out = table(["字段", "内容"], props.filter(([, s]) => scalar(s)).map(([key, s]) => [label(key), cell(data[key], s)]));
     for (const [key, s] of props.filter(([, s]) => !scalar(s))) out += `${"#".repeat(depth)} ${label(key)}\n\n${renderNode(data[key], s, depth + 1)}`;
     return out;
@@ -92,7 +93,7 @@ function readNode(node: Section, schema: Schema, where: string): any {
       if (!key || scalar(props[key]) || key in out) throw new Error(`${where}：未知或重复章节“${child.title}”`);
       out[key] = readNode(child, props[key], `${where}/${child.title}`);
     }
-    for (const key of Object.keys(props)) if (!(key in out)) throw new Error(`${where}：缺少“${label(key)}”`);
+    for (const key of schema.required ?? Object.keys(props)) if (!(key in out)) throw new Error(`${where}：缺少“${label(key)}”`);
     if (lines.some(line => !line.startsWith("|"))) throw new Error(`${where}：正文说明请放到文末“## 说明”，表格内换行使用 <br>`);
     return out;
   }

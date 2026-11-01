@@ -1,7 +1,7 @@
 # Dreamatic · Info
 # 项目开发总指令（Project Master Specification）
 
-> 2026-10-30 通讯协议更新：依据用户最新指令，智能体以 Markdown 为正式交接格式，程序生成结构化内部索引。下文原始指令中“模型维护 MD/JSON 双份成果”的部分由此更新取代；数据真实性、编号、引用校验及版本恢复要求继续保留。系统仅支持当前 Markdown 协议，不保留旧项目转换、旧提交接口或报告 JSON 副本。具体协议见 [MARKDOWN_PROTOCOL.md](MARKDOWN_PROTOCOL.md)。
+> 2026-10-30 通讯协议更新：依据用户最新指令，智能体以 Markdown 为正式交接格式，程序生成结构化内部索引。数据真实性、编号、引用校验及版本恢复要求继续保留。系统仅支持当前 Markdown 协议，不保留旧项目转换、旧提交接口或报告 JSON 副本。具体协议见 [MARKDOWN_PROTOCOL.md](MARKDOWN_PROTOCOL.md)。
 
 ## 一、项目定位与核心目标
 
@@ -93,7 +93,7 @@ Dreamatic · Info 是一款基于大语言模型（LLM）的智能信息设计�
 
 ## 三、整体智能体架构
 
-系统由五个专业智能体和一个轻量级 Orchestrator 组成。
+系统由五个专业智能体和确定性 Orchestrator 程序模块组成。
 
 五个专业智能体按照以下顺序协作：
 
@@ -146,11 +146,11 @@ ChatBot 应尽量减少无必要的提问。当已有信息足以支持后续工
 **输出文件：**
 
 - `intent.md`：人类可读的完整需求说明。
-- `intent.json`：结构化的项目意图数据。
+
 
 `intent.md` 应记录项目目标、主题、受众、内容范围、数据要求、叙事方向、视觉偏好及其他必要约束。
 
-`intent.json` 应提供便于其他智能体直接读取的标准化字段。
+由 `intent.md` 编译的内部索引 应提供便于其他智能体直接读取的标准化字段。
 
 后续智能体均以最终确认的项目意图作为执行依据。
 
@@ -185,17 +185,17 @@ Researcher 根据 `intent.md` 开展数据调研，根据用户是否提供数�
 **输出文件：**
 
 - `research.md`：调研报告。
-- `research.json`：结构化数据来源、数据集及调研结果索引。
+
 
 `research.md` 汇总数据来源、采集结果、数据结构、背景资料、文献及调研结论。
 
-`research.json` 记录数据集、字段、来源 ID、文件位置及相关元数据。
+由 `research.md` 编译的内部索引 记录数据集、字段、来源 ID、文件位置及相关元数据。
 
 ### 3.4 Analyst — 数据分析与事实提取智能体
 
 **核心职责：从调研材料中提取有价值的数据事实，建立事实之间的逻辑关联。**
 
-Analyst 根据 `research.md`、`research.json` 及相关原始数据开展分析，将原始信息转化为可用于信息叙事的数据事实。
+Analyst 根据 `research.md`、由 `research.md` 编译的内部索引 及相关原始数据开展分析，将原始信息转化为可用于信息叙事的数据事实。
 
 主要任务：
 
@@ -266,16 +266,15 @@ Data Facts 是 Dreamatic · Info 的核心数据资产。
 
 根据数据类型允许扩展字段，但必须保持核心字段结构统一。
 
-#### 数据事实双重存储机制
+#### 数据事实正式文档与内部索引
 
 **输出文件：**
 
 - `datafacts.md`
-- `datafacts.json`
 
 `datafacts.md` 用于人类阅读，按照独立数据事实条目组织内容，清晰呈现事实、分析结论、证据和关联关系。
 
-`datafacts.json` 用于机器读取和后续处理，保存完整的数据事实对象及事实之间的关联网络。
+由 `datafacts.md` 编译的内部索引 用于机器读取和后续处理，保存完整的数据事实对象及事实之间的关联网络。
 
 JSON 应采用统一 Schema，并进行必要的结构校验。
 
@@ -301,7 +300,7 @@ Designer 根据以下文件开展设计：
 
 - `intent.md`：用户需求及设计目标。
 - `datafacts.md`：数据事实及分析结果。
-- `datafacts.json`：结构化事实及关联网络。
+
 
 设计工作分为三个层次。
 
@@ -362,12 +361,11 @@ Designer 必须支持两类 Skill。
 
 Skill 应优先通过 Pi Harness 原生 Skill 加载机制实现。不同 Skill 应保持独立、可组合和可扩展。
 
-#### 设计方案双重输出机制
+#### 设计方案正式文档与内部索引
 
 **输出文件：**
 
 - `design.md`
-- `design.json`
 
 `design.md` 用于描述完整的设计理念和设计逻辑，包括：
 
@@ -380,7 +378,7 @@ Skill 应优先通过 Pi Harness 原生 Skill 加载机制实现。不同 Skill 
 - 交互、动画及动态效果设计。
 - 组件结构及技术实现规范。
 
-`design.json` 用于描述机器可执行的设计规范，包括：
+由 `design.md` 编译的内部索引 用于描述机器可执行的设计规范，包括：
 
 - 页面尺寸及布局参数。
 - 页面区域及信息模块。
@@ -394,7 +392,7 @@ Skill 应优先通过 Pi Harness 原生 Skill 加载机制实现。不同 Skill 
 
 #### Designer 与 Builder 设计协议
 
-`design.md` 是设计方案的完整说明文档，`design.json` 是 Builder 实现时使用的结构化设计协议。
+`design.md` 是设计方案的完整说明文档，由 `design.md` 编译的内部索引 是 Builder 实现时使用的结构化设计协议。
 
 必须遵循以下原则：
 
@@ -404,7 +402,7 @@ Skill 应优先通过 Pi Harness 原生 Skill 加载机制实现。不同 Skill 
 4. 设计参数应尽量采用明确的数值和标准化字段。
 5. 图片素材应明确描述用途、尺寸、风格及生成要求。
 6. 动画和交互应明确触发条件、行为及预期效果。
-7. `design.md` 与 `design.json` 必须保持一致。
+7. `design.md` 与 由 `design.md` 编译的内部索引 必须保持一致。
 
 Designer 输出后，应检查设计文件是否完整、JSON 是否符合 Schema，以及是否具备可实现性。
 
@@ -415,9 +413,7 @@ Designer 输出后，应检查设计文件是否完整、JSON 是否符合 Schem
 Builder 主要依据：
 
 - `intent.md`
-- `datafacts.json`
 - `design.md`
-- `design.json`
 
 执行具体实现工作。
 
@@ -426,7 +422,7 @@ Builder 主要依据：
 **1. 设计方案解析**
 
 - 读取并理解完整的信息图设计方案。
-- 解析 `design.json` 中的页面结构、组件、数据映射及交互配置。
+- 解析 由 `design.md` 编译的内部索引 中的页面结构、组件、数据映射及交互配置。
 - 检查设计方案与 Data Facts 的对应关系。
 - 发现缺失信息或实现冲突时，优先反馈并解决问题，不得擅自改变核心设计意图。
 
@@ -480,7 +476,7 @@ B. PDF 海报
 
 ## 四、智能体通信与文件交接规范
 
-五个智能体通过统一的项目工作空间协作，采用 Markdown 与 JSON 相结合的通信机制。
+五个智能体通过统一的项目工作空间协作，采用 Markdown 正式交接、程序生成内部索引的通信机制。
 
 ### 4.1 Markdown：逻辑指令与文档交接
 
@@ -503,9 +499,9 @@ Markdown 用于记录：
 | Designer | design.md | Builder |
 | Builder | 最终作品及交付说明 | 用户 |
 
-### 4.2 JSON：结构化数据通信
+### 4.2 程序内部索引
 
-JSON 用于传递机器可读的数据，包括：
+程序解析 Markdown 生成机器可读内部索引，包括：
 
 - 项目意图及任务参数。
 - 数据集及数据来源。
@@ -515,13 +511,13 @@ JSON 用于传递机器可读的数据，包括：
 - 工具调用参数及执行结果。
 - 任务执行状态。
 
-所有核心 JSON 文件应使用明确的 Schema，规定字段名称、类型、必填项和关联关系。
+所有内部索引应使用明确的 Schema，规定字段名称、类型、必填项和关联关系。
 
 ### 4.3 统一文件管理原则
 
-1. Markdown 与 JSON 应由对应智能体共同维护。
+1. 智能体仅维护 Markdown；程序解析并校验内部索引。
 2. Markdown 面向人类阅读，JSON 面向程序读取。
-3. 同一阶段的两种文件必须保持语义一致。
+3. 内部索引必须由正式 Markdown 可靠推导，不要求智能体维护副本。
 4. 不允许下游智能体随意覆盖上游智能体的正式产物。
 5. 需要修改上游产物时，应形成明确的修改记录并触发必要的下游任务更新。
 6. 保留必要的版本信息和更新时间，便于问题追踪与恢复。
@@ -560,13 +556,9 @@ dreamatic-info/
     - output/
     - state/
     - intent.md
-    - intent.json
     - research.md
-    - research.json
     - datafacts.md
-    - datafacts.json
     - design.md
-    - design.json
     - task-state.json
     - execution-log.md
 - config/
@@ -723,7 +715,7 @@ Codex 应按照以下步骤开展项目开发。
 - Orchestrator 的任务调度机制。
 - 模型独立配置机制。
 - Pi Skill 加载机制。
-- Markdown 与 JSON 通信协议。
+- Markdown 正式交接协议。
 - Data Facts 数据模型。
 - Designer 与 Builder 设计协议。
 - 项目文件管理及状态持久化机制。
@@ -740,7 +732,7 @@ Codex 应按照以下步骤开展项目开发。
 4. 五个智能体的独立定义和运行。
 5. 模型配置机制。
 6. Skill 加载机制。
-7. Markdown 与 JSON 通信机制。
+7. Markdown 正式交接机制。
 8. 任务状态管理及断点恢复。
 
 ### 第四阶段：前端开发
@@ -768,7 +760,7 @@ Codex 应按照以下步骤开展项目开发。
 3. 用户不提供数据，由 Researcher 自动搜索和采集。
 4. Analyst 能够提取 Data Facts 并建立关联关系。
 5. Designer 能够生成完整的数据叙事和设计方案。
-6. Builder 能够按照 `design.json` 还原设计并生成 HTML。
+6. Builder 能够按照 由 `design.md` 编译的内部索引 还原设计并生成 HTML。
 7. 系统能够导出 PDF 海报。
 8. 用户中断任务后能够从正确节点恢复。
 9. 修改上游数据后能够正确识别并更新受影响的下游产物。

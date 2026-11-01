@@ -54,3 +54,8 @@ AnalystWorkbench 基于当前需求、intent、Research 与实际来源内容摘
 ## 叙事设计中间成果
 
 DesignerWorkbench 按需求、正式事实、Research、设计 Schema 及实际来源摘要隔离 Markdown 草稿。原生读取/保存/段落修正/排序工具返回当前版本与校验清单，设计进展复用草稿无进展保护。项目详情与 design/progress 只读投影接通原有轮询/SSE；逻辑与叙事 Tab 联动展示故事顺序、选材理由、事实与证据、来自 Analyst 的关系和显式 story_ids 组件映射。完成正式提交后才向 Builder 暴露设计，详见 [DESIGNER_WORKBENCH.md](DESIGNER_WORKBENCH.md)。
+
+
+## D3 可视化
+
+工作台事实卡片使用 D3 7.9.0 的比例尺、折线和环形布局计算几何，由 React 渲染 SVG。Designer/Builder 通过原生 read_visualization_guide 获取数据、单位、可访问性与 D3 API 契约。Builder save_html 与正式持久化共用本地官方运行库内嵌逻辑；下载 HTML、隔离预览和 PDF 使用同一自包含产物，不添加 CDN 或网络权限。Builder 指纹包含库版本与摘要；保留五个角色与 Markdown 交接。详见 [D3 接入记录](D3_VISUALIZATION.md)。

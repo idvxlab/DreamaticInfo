@@ -1,3 +1,5 @@
+import { RunMetrics } from "./run-metrics.js";
+import { visualizationRuntimeInfo } from "./visualization-runtime.js";
 import { DOCUMENT_PROTOCOL } from "./markdown-protocol.js";
 import { DocumentSubmissionError } from "./submission-policy.js";
 import { CONFIG_FIELDS, setting, approvedSkillPaths } from "./config-store.js";
@@ -24,7 +26,7 @@ import {
   upstream,
   handoffDocuments,
 } from "./store.js";
-import { hash, names, validateReferences } from "./validation.js";
+import { hash, names, schemas, validateReferences } from "./validation.js";
 import { getModels, NeedsAnswer, piRunner, type Runner } from "./pi.js";
 import { validateProvenance } from "./provenance.js";
 export type Event = { at: string; text: string; role?: Role };
@@ -87,6 +89,8 @@ export class Orchestrator {
       skill_paths: approvedSkillPaths(role),
       mode: p.mode,
       document_protocol: DOCUMENT_PROTOCOL,
+      role_contract: hash({ schema: schemas[names[role]], prompt: await readFile(new URL(`../../../agents/${role}.md`, import.meta.url), "utf8") }),
+      visualization_runtime: role === "builder" ? await visualizationRuntimeInfo() : undefined,
       handoff_documents: (await handoffDocuments(p, role)).map(doc => [doc.name, hash(doc.text)]),
     });
   }
@@ -163,6 +167,9 @@ export class Orchestrator {
   private async execute(id: string, signal: AbortSignal) {
     const p = await get(id),
       models = await getModels();
+    const metrics = new RunMetrics(projectDir(id));
+    metrics.record("run_start", { project_created_at: p.created_at, models });
+    const endRun = metrics.span("run");
     try {
       await this.reconcile(p, models);
       p.state.status = "running";
@@ -198,8 +205,11 @@ export class Orchestrator {
               signal,
               AbortSignal.timeout(policy.max_stage_minutes * 60 * 1000),
             ]);
+            const endStage = metrics.span("stage_attempt", { role, attempt: p.state.stages[role].attempts });
+            try {
             result = await this.runner(p, role, models[role], {
               signal: stageSignal,
+              metric: (kind, fields) => metrics.record(kind, { role, ...fields }),
               event: (text) => {
                 emit(id, text, role);
                 void log(id, text);
@@ -208,6 +218,8 @@ export class Orchestrator {
             signal.throwIfAborted();
             validateReferences(role, result.data, await upstream(p, role));
             await validateProvenance(p, role, result.data);
+            endStage();
+            } catch (error) { endStage("error"); throw error; }
             break;
           } catch (e) {
             if (
@@ -250,6 +262,7 @@ export class Orchestrator {
         at: now(),
       });
       await save(p);
+      metrics.record("delivery", { wall_ms: Date.now() - Date.parse(p.created_at), builder_version: p.state.stages.builder.version });
       emit(id, "全部阶段完成");
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e),
@@ -270,7 +283,11 @@ export class Orchestrator {
         });
       await save(p);
       await log(id, `${p.state.status}: ${message}`);
+      metrics.record(e instanceof NeedsAnswer ? "waiting_for_information" : signal.aborted ? "interrupted" : "failed");
       emit(id, message, role ?? undefined);
+    } finally {
+      endRun(p.state.status);
+      await metrics.flush().catch(error => log(id, `性能记录保存失败：${String(error)}`));
     }
   }
   async invalidate(id: string, from: Role) {

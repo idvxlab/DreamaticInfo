@@ -1,3 +1,4 @@
+import { embedVisualizationRuntime } from "./visualization-runtime.js";
 import { readDesignProgress } from "./designer-workbench.js";
 import { readAnalysisProgress } from "./analyst-workbench.js";
 import { readProgress } from "./research-state.js";
@@ -165,6 +166,7 @@ export async function commit(
   inputHash: string,
   document: string,
 ) {
+  if (role === "builder") data = { ...data, html: await embedVisualizationRuntime(data.html) };
   const root = projectDir(p.id),
     version = `${role}-${randomUUID()}`,
     vdir = path.join(root, "state/versions", version);

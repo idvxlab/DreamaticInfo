@@ -1,3 +1,4 @@
+import FactChart, { hasFactChart } from "./FactChart";
 import { hasMixedUnits } from "../../../packages/shared/units";
 import { factTypeLabels, factBasisLabels } from "../../../packages/shared/fact-types";
 import { ArrowUpRight, ChevronRight, FileText, Link2 } from "lucide-react";
@@ -23,14 +24,7 @@ export default function FactCard({
   relatedFacts?: Fact[];
 }) {
   const mixedUnits = hasMixedUnits(f.specification?.series_unit ?? f.unit);
-  const series = f.series,
-    upper = Math.max(0, ...series.map((s) => s.value)),
-    lower = Math.min(0, ...series.map((s) => s.value));
-  const yFor = (value: number) =>
-    76 - ((value - lower) / Math.max(1, upper - lower)) * 58;
-  const zeroY = yFor(0);
-  const focusLabels = new Set(f.specification?.focus.split("、") ?? []);
-  const hasFocusedSeries = series.some(item => focusLabels.has(item.label));
+  const chart = hasFactChart(f), series = f.series;
   return (
     <article className={`fact-card ${linked ? "linked" : ""}`}>
       <div className="fact-card-top">
@@ -45,52 +39,10 @@ export default function FactCard({
         </span>
       </div>
       <div className="fact-derivation"><span className={`fact-basis ${f.derivation}`}>{factBasisLabels.get(f.derivation) ?? "依据方式待补充"}</span>{f.specification?.focus && <small>关注：{f.specification.focus}</small>}</div>
-      {["rank", "extreme", "outlier"].includes(f.type) && <p className="fact-key-result">{f.type === "rank" ? "名次" : f.type === "extreme" ? "极值" : "异常观测"}：{f.value} {f.unit}</p>}
-      <div className="fact-visual">
-        {(["trend", "distribution", "rank", "extreme", "outlier"].includes(f.type)) &&
-        series.length > 0 && !mixedUnits ? (
-          <svg viewBox="0 0 300 100" role="img" aria-label={f.title}>
-            <title>{f.title}</title>
-            <line
-              x1="16"
-              x2="284"
-              y1={zeroY}
-              y2={zeroY}
-              stroke="#ccd4bc"
-              strokeWidth="0.6"
-            />
-            {series.map((s, i) => (
-              <g key={i}>
-                <rect
-                  x={20 + i * (260 / Math.max(series.length, 1))}
-                  y={Math.min(zeroY, yFor(s.value))}
-                  width={Math.min(36, 220 / Math.max(series.length, 1))}
-                  height={Math.abs(yFor(s.value) - zeroY)}
-                  rx="3"
-                  fill={(hasFocusedSeries ? focusLabels.has(s.label) : i === series.length - 1) ? "#a7bc69" : "#d76942"}
-                />
-                <text
-                  x={20 + i * (260 / Math.max(series.length, 1))}
-                  y="94"
-                  fontSize="9"
-                  fill="#85877f"
-                >
-                  {s.label}
-                </text>
-                <title>
-                  {s.label}: {s.value} {f.specification?.series_unit ?? f.unit}
-                </title>
-              </g>
-            ))}
-          </svg>
-        ) : (
-          <div className="fact-value">
-            {f.value}
-            <small>{f.unit}</small>
-          </div>
-        )}
+      {["rank", "extreme", "outlier", "comparison", "trend", "categorization", "distribution"].includes(f.type) && chart && <p className="fact-key-result">{f.type === "rank" ? "名次" : f.type === "extreme" ? "极值" : f.type === "outlier" ? "异常观测" : "核心结论"}：{f.value} {f.unit}</p>}
+      <div className={`fact-visual ${chart ? "has-d3-chart" : ""}`}>
+        {chart ? <FactChart fact={f} /> : <div className="fact-value">{f.value}<small>{f.unit}</small></div>}
       </div>
-      {f.type === "proportion" && typeof f.value === "number" && f.value >= 0 && f.value <= 100 && <div className="fact-proportion-track" aria-label={`占比 ${f.value}%`}><span style={{ width: `${f.value}%` }} /></div>}
       {f.series.length > 0 && <small className="fact-series-unit">序列单位：{f.specification?.series_unit ?? f.unit}</small>}
       {mixedUnits && series.length > 0 && <details className="fact-unit-warning"><summary>混合单位序列，暂不绘制同轴图表</summary><p>请按单位拆分事实。以下仅保留原始标签和值，不猜测单位、不换算或删减数据。</p><table><thead><tr><th>原始标签</th><th>数值</th></tr></thead><tbody>{series.map((item, i) => <tr key={i}><td>{item.label}</td><td>{item.value}</td></tr>)}</tbody></table></details>}
       <h3>{f.title}</h3>

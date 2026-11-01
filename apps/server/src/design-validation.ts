@@ -17,6 +17,7 @@ export function designReferenceIssues(d: Design, facts: DataFacts): DesignIssue[
     const add = (field: string, message: string, fix: string) => issues.push({ component: c.id, location: `组件 ${c.id}（${c.title}）／${field}`, message, fix });
     if (!c.id.trim() || componentIds.has(c.id)) add("编号", "组件编号为空或重复", "使用非空且唯一的组件编号");
     componentIds.add(c.id);
+    for (const id of c.asset_ids ?? []) if (!d.assets.some(asset => asset.id === id)) add("素材引用", `未知素材 ${id}`, "引用正式素材编号");
     for (const id of c.fact_ids) if (!known.has(id)) add("事实编号列表", `未知事实 ${id}`, `用 patch_design_component 修正 ${c.id}；仅引用正式事实，空编号列表单独写无`);
     for (const id of c.story_ids) if (!storyIds.has(id)) add("段落编号列表", `未知段落 ${id}`, "填写现有故事线的段落编号，不填组件编号");
     if (c.fact_ids.length && (!c.story_ids.length || c.fact_ids.some(id => !d.storyline.some(story => c.story_ids.includes(story.id) && story.fact_ids.includes(id))))) add("段落与事实", "组件事实不属于所关联段落", "补齐段落编号列表，并使组件事实属于关联段落的事实集合");
@@ -49,6 +50,14 @@ export function designReferenceIssues(d: Design, facts: DataFacts): DesignIssue[
   for (const asset of d.assets) {
     if (!asset.id.trim() || assetIds.has(asset.id)) issues.push({ location: `素材 ${asset.id}／编号`, message: "素材编号为空或重复", fix: "使用非空且唯一的素材编号" });
     assetIds.add(asset.id);
+    if (asset.width <= 0 || asset.height <= 0) issues.push({ location: `素材 ${asset.id}`, message: "素材尺寸须为正", fix: "指定有效尺寸" });
+    const commission = asset.commission;
+    if (commission) {
+      for (const id of commission.content_ids) if (!known.has(id)) issues.push({ location: `素材 ${asset.id}`, message: `未知事实 ${id}`, fix: "关联正式事实编号" });
+      if (commission.semantics !== "decorative" && !commission.content_ids.length) issues.push({ location: `素材 ${asset.id}`, message: "信息性素材缺少事实依据", fix: "关联正式事实，不借插画编造结构或数据" });
+      if (commission.semantics === "data") issues.push({ location: `素材 ${asset.id}`, message: "精确数据编码不能交给图像生成", fix: "改用有正式映射的代码组件" });
+      if (!d.components.some(component => component.asset_ids?.includes(asset.id))) issues.push({ location: `素材 ${asset.id}`, message: "委托素材未被组件引用", fix: "添加使用关系或删除不必要委托" });
+    }
   }
   return issues;
 }
