@@ -1,3 +1,5 @@
+import StructureChart from "./StructureChart";
+import { structuralTypes } from "../../../packages/shared/structure";
 import { useId, useState, type KeyboardEvent } from "react";
 import { arc, pie } from "d3";
 import type { Fact } from "../../../packages/shared/types";
@@ -5,10 +7,11 @@ import { cartesianChart } from "../../../packages/shared/chart-geometry";
 import { hasMixedUnits } from "../../../packages/shared/units";
 
 export function hasFactChart(fact: Fact) {
-  return fact.type === "proportion" ? typeof fact.value === "number" && fact.unit === "%" && fact.value >= 0 && fact.value <= 100 : ["trend", "distribution", "comparison", "rank", "extreme", "outlier", "categorization"].includes(fact.type) && fact.series.length > 0 && !hasMixedUnits(fact.specification?.series_unit ?? fact.unit);
+  return structuralTypes.includes(fact.type as typeof structuralTypes[number]) || (fact.type === "proportion" ? typeof fact.value === "number" && fact.unit === "%" && fact.value >= 0 && fact.value <= 100 : ["trend", "distribution", "comparison", "rank", "extreme", "outlier", "categorization"].includes(fact.type) && fact.series.length > 0 && !hasMixedUnits(fact.specification?.series_unit ?? fact.unit));
 }
 export default function FactChart({ fact }: { fact: Fact }) {
   const titleId = useId(), [active, setActive] = useState<number | null>(null);
+  if (structuralTypes.includes(fact.type as typeof structuralTypes[number])) return <StructureChart fact={fact}/>;
   const unit = fact.type === "proportion" ? "%" : fact.specification?.series_unit ?? fact.unit;
   const focus = new Set((fact.specification?.focus ?? "").split(/[、，,；;]/).map(label => label.trim()));
   const percentage = fact.type === "proportion";

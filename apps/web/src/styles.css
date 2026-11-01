@@ -2567,3 +2567,63 @@ textarea {
 .fact-chart-data th,.fact-chart-data td { padding:5px 0; border-bottom:1px solid #dce2d0; overflow-wrap:anywhere; }
 .fact-chart-data th:last-child,.fact-chart-data td:last-child { text-align:right; font-variant-numeric:tabular-nums; }
 .fact-chart-error { margin:5px; font-size:11px; color:#995333; line-height:1.6; }
+
+/* Shared secondary disclosures in the design and delivery workbenches. */
+.supporting-panel {
+  margin: 0 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  min-width: 0;
+}
+.supporting-panel-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.supporting-panel-toggle::-webkit-details-marker { display: none; }
+.supporting-panel-toggle::marker { content: ''; }
+.supporting-panel-toggle:hover { background: rgba(32, 33, 29, .025); }
+.supporting-panel-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 7px; }
+.supporting-panel-title { color: var(--ink); font-weight: 550; }
+.supporting-panel-summary { display: flex; flex-wrap: wrap; gap: 3px 16px; color: var(--muted); font-size: 11px; min-width: 0; }
+.supporting-panel-summary > span { overflow-wrap: anywhere; }
+.supporting-panel-summary b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+.supporting-panel-chevron { color: var(--muted); transition: transform .16s; }
+.supporting-panel[open] > .supporting-panel-toggle .supporting-panel-chevron { transform: rotate(180deg); }
+.supporting-panel-content { padding: 4px 16px 16px; border-top: 1px solid var(--line); }
+.supporting-panel-fields { margin: 0; }
+.supporting-panel-fields > div { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.85; }
+.supporting-panel-fields > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.supporting-panel-fields dt { color: var(--muted); }
+.supporting-panel-fields dd { margin: 0; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+.supporting-panel-milestones { display: flex; flex-wrap: wrap; gap: 12px 32px; margin: 12px 0; font-size: 12px; }
+.supporting-panel-milestones > div { display: flex; gap: 12px; }
+.supporting-panel-milestones dt { color: var(--muted); }
+.supporting-panel-milestones dd { margin: 0; font-variant-numeric: tabular-nums; }
+.supporting-panel-content > .supporting-panel-note { margin: 10px 0 4px; font-size: 11px; line-height: 1.8; color: var(--muted); }
+.supporting-panel-durations > div { grid-template-columns: minmax(0, 1fr) auto; font-size: 11px; padding: 8px 0; }
+.supporting-panel-durations dt { overflow-wrap: anywhere; }
+.supporting-panel-durations dd { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) {
+  .supporting-panel-toggle { gap: 4px 10px; padding: 12px; }
+  .supporting-panel-title { grid-column: 1 / 3; }
+  .supporting-panel-summary { grid-column: 1 / 3; grid-row: 2; gap: 3px 12px; }
+  .supporting-panel-chevron { grid-column: 3; grid-row: 1 / 3; }
+  .supporting-panel-content { padding: 4px 12px 12px; }
+  .supporting-panel-fields > div { grid-template-columns: 68px minmax(0, 1fr); gap: 12px; }
+  .supporting-panel-durations > div { grid-template-columns: minmax(0, 1fr) auto; }
+}
+@media (prefers-reduced-motion: reduce) { .supporting-panel-chevron { transition: none; } }
+
+.retained-results-notice { margin-bottom: 20px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; line-height: 1.8; }
+.retained-results-notice strong { font-weight: 550; }
+.retained-results-notice p { margin: 4px 0 8px; color: var(--muted); }
+.retained-results-notice > div { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.retained-results-notice a { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }

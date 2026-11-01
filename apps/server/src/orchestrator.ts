@@ -1,3 +1,7 @@
+import { contentDigest } from "./content-digest.js";
+import { reviewDelivery, type Reviewer, type ReviewIssue } from "./visual-review.js";
+import { inspectDelivery, requireUsableDelivery } from "./delivery-quality.js";
+import { ExecutionBudget } from "./execution-budget.js";
 import { RunMetrics } from "./run-metrics.js";
 import { visualizationRuntimeInfo } from "./visualization-runtime.js";
 import { DOCUMENT_PROTOCOL } from "./markdown-protocol.js";
@@ -22,6 +26,8 @@ import {
   projectDir,
   readArtifact,
   safePath,
+  atomic,
+  json,
   save,
   upstream,
   handoffDocuments,
@@ -39,7 +45,7 @@ export class Orchestrator {
     string,
     { controller: AbortController; done: Promise<void> }
   >();
-  constructor(private runner: Runner = piRunner) {}
+  constructor(private runner: Runner = piRunner, private reviewer?: Reviewer) {}
   busy(id: string) {
     return this.active.has(id);
   }
@@ -60,8 +66,8 @@ export class Orchestrator {
       const root = projectDir(p.id);
       uploads.push([
         f.id,
-        hash((await readFile(await safePath(root, f.path))).toString("base64")),
-        hash(await readFile(await safePath(root, f.normalized), "utf8")),
+        await contentDigest(await safePath(root, f.path), "base64"),
+        await contentDigest(await safePath(root, f.normalized)),
       ]);
     }
     return hash({
@@ -165,10 +171,13 @@ export class Orchestrator {
     await run.done;
   }
   private async execute(id: string, signal: AbortSignal) {
+    const parentSignal = signal;
     const p = await get(id),
       models = await getModels();
     const metrics = new RunMetrics(projectDir(id));
-    metrics.record("run_start", { project_created_at: p.created_at, models });
+    const runBudget = new ExecutionBudget(signal, Number(setting("DREAMATIC_RUN_TIMEOUT_MINUTES")) * 60_000);
+    signal = runBudget.signal;
+    metrics.record("run_start", { effective_request_at: p.messages.find(m => m.role === "user" && m.text.trim())?.at ?? null, models });
     const endRun = metrics.span("run");
     try {
       await this.reconcile(p, models);
@@ -176,7 +185,14 @@ export class Orchestrator {
       p.state.error = null;
       await save(p);
       emit(id, "任务开始");
-      for (const role of roles) {
+      const repairScope = hash({ brief: p.brief, messages: p.messages.filter(m => m.role === "user"), uploads: p.uploads.map(u => u.sha256) });
+      const repairFile = path.join(projectDir(id), 'state/repair.json');
+      let repairIssues: ReviewIssue[] = [];
+      let repairCount = 0;
+      try { const stored = await json(repairFile); if (stored.scope === repairScope) { repairIssues = stored.issues; repairCount = stored.count; } } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+      let visualLimit = "";
+      for (let roleIndex = 0; roleIndex < roles.length; roleIndex++) {
+        const role = roles[roleIndex];
         signal.throwIfAborted();
         if (p.state.stages[role].status === "completed") continue;
         p.state.current_stage = role;
@@ -196,19 +212,21 @@ export class Orchestrator {
         const inputHash = await this.fingerprint(p, role, models);
         emit(id, `${role} 开始`, role);
         let result;
+        const stageBudget = new ExecutionBudget(signal, policy.max_stage_minutes * 60_000);
+        try {
         for (let attempt = 0; attempt < policy.retries; attempt++) {
           signal.throwIfAborted();
           p.state.stages[role].attempts++;
           await save(p);
           try {
-            const stageSignal = AbortSignal.any([
-              signal,
-              AbortSignal.timeout(policy.max_stage_minutes * 60 * 1000),
-            ]);
+            const stageSignal = stageBudget.signal;
+            stageSignal.throwIfAborted();
             const endStage = metrics.span("stage_attempt", { role, attempt: p.state.stages[role].attempts });
             try {
             result = await this.runner(p, role, models[role], {
               signal: stageSignal,
+              repair: repairIssues.filter(issue => issue.owner === role),
+              consume: kind => runBudget.consume(kind),
               metric: (kind, fields) => metrics.record(kind, { role, ...fields }),
               event: (text) => {
                 emit(id, text, role);
@@ -223,7 +241,7 @@ export class Orchestrator {
             break;
           } catch (e) {
             if (
-              signal.aborted ||
+              stageBudget.signal.aborted ||
               e instanceof NeedsAnswer ||
               e instanceof DocumentSubmissionError ||
               attempt === policy.retries - 1 ||
@@ -232,6 +250,8 @@ export class Orchestrator {
               )
             )
               throw e;
+            runBudget.consume("retry");
+            metrics.record("retry", { role, attempt });
             emit(id, `${role} 遇到临时网络或限流错误，准备自动重试`, role);
             await new Promise<void>((resolve, reject) => {
               const cb = () => {
@@ -249,26 +269,55 @@ export class Orchestrator {
             });
           }
         }
+        } finally { stageBudget.close(); }
+        signal.throwIfAborted();
         if (!result) throw new Error("No stage result");
+        if (role === "builder") {
+          const endCheck = metrics.span("delivery_check");
+          try { requireUsableDelivery(await inspectDelivery(result.data.html, (await readArtifact(p, "designer"))!.data.page.width, signal)); endCheck(); }
+          catch (error) { endCheck("error"); throw error; }
+        }
         await commit(p, role, result.data, result.notes, inputHash, result.markdown);
+        if (role === "builder") metrics.record("first_preview", { wall_ms: Date.now() - Date.parse(p.messages.find(m => m.role === "user" && m.text.trim())?.at ?? p.created_at) });
         emit(id, `${role} 已完成`, role);
+        if (role === "builder" && this.reviewer) {
+          const endReview = metrics.span("visual_review", { revision: p.state.stages.builder.version, repair: repairCount });
+          const review = await this.reviewer(p, result.data.html, (await readArtifact(p, "designer"))!.data, models, signal, { metric: (kind, fields) => metrics.record(kind, { role: "designer", ...fields }), consume: kind => runBudget.consume(kind) });
+          endReview(review.status);
+          await atomic(path.join(projectDir(id), `state/reviews/review-${p.state.stages.builder.version}.md`), review.markdown);
+          if (review.status === "unsupported") visualLimit = review.markdown;
+          if (review.issues.length) {
+            if (repairCount >= 2) throw new Error("视觉复核返修预算已耗尽：" + review.markdown);
+            runBudget.consume("repair");
+            repairIssues = review.issues; repairCount++;
+            await atomic(repairFile, JSON.stringify({ scope: repairScope, issues: repairIssues, count: repairCount }));
+            const owner = roles.find(r => review.issues.some(issue => issue.owner === r))!;
+            const from = roles.indexOf(owner);
+            for (const downstream of roles.slice(from)) p.state.stages[downstream] = { status: "pending", attempts: p.state.stages[downstream].attempts };
+            metrics.record("repair", { owner, count: repairCount, issues: review.issues.map(({ id, owner, component }) => ({ id, owner, component })) });
+            await save(p); roleIndex = from - 1;
+            emit(id, `视觉复核发现问题，交由 ${owner} 局部返修`, owner);
+          }
+        }
+
       }
+      await rm(repairFile, { force: true });
       p.state.status = "completed";
       p.state.current_stage = null;
       p.state.error = null;
       p.messages.push({
         role: "assistant",
-        text: "信息图已完成，可查看事实、设计与作品，并导出 HTML 或 PDF。",
+        text: "信息图已完成，可查看事实、设计与作品，并导出 HTML 或 PDF。" + visualLimit,
         at: now(),
       });
       await save(p);
-      metrics.record("delivery", { wall_ms: Date.now() - Date.parse(p.created_at), builder_version: p.state.stages.builder.version });
+      metrics.record("delivery", { wall_ms: Date.now() - Date.parse(p.messages.find(m => m.role === "user" && m.text.trim())?.at ?? p.created_at), builder_version: p.state.stages.builder.version });
       emit(id, "全部阶段完成");
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e),
         role = p.state.current_stage;
       p.state.status =
-        signal.aborted || e instanceof NeedsAnswer ? "interrupted" : "failed";
+        parentSignal.aborted || e instanceof NeedsAnswer ? "interrupted" : "failed";
       p.state.error = message;
       if (role) {
         p.state.stages[role].status = p.state.status;
@@ -283,9 +332,10 @@ export class Orchestrator {
         });
       await save(p);
       await log(id, `${p.state.status}: ${message}`);
-      metrics.record(e instanceof NeedsAnswer ? "waiting_for_information" : signal.aborted ? "interrupted" : "failed");
+      metrics.record(e instanceof NeedsAnswer ? "waiting_for_information" : parentSignal.aborted ? "interrupted" : "failed");
       emit(id, message, role ?? undefined);
     } finally {
+      runBudget.close();
       endRun(p.state.status);
       await metrics.flush().catch(error => log(id, `性能记录保存失败：${String(error)}`));
     }
@@ -309,4 +359,4 @@ export class Orchestrator {
     return p;
   }
 }
-export const orchestrator = new Orchestrator();
+export const orchestrator = new Orchestrator(piRunner, reviewDelivery);

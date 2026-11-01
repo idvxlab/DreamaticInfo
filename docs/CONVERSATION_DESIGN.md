@@ -1,33 +1,19 @@
-# 对话区设计调查与实施
+# Conversation design investigation and implementation
 
-日期：2026-10-30。
+Date: 2026-10-30. Historical references were Art AgentPanel.tsx, RunStatus.tsx, CompletionSummary.tsx and styles.css. Only design/code was inspected, without neighboring credentials or runtime data.
 
-## 调查
+Art uses a fixed header/composer and independently scrolling middle, dark right-aligned user messages, light left-aligned assistant messages, role timelines and expandable execution cards. Tool progress, stage artifacts and file links have separate hierarchy. Clarification offers options/custom answers and completion provides delivery links. Enter sends, Shift+Enter inserts a line and IME composition never sends. Reading older messages preserves scroll.
 
-参考 Art 源码：`apps/web/src/components/AgentPanel.tsx`、`RunStatus.tsx`、`CompletionSummary.tsx` 与 `apps/web/src/styles.css`。仅检查设计与代码，未读取相邻项目的凭据或运行数据。
+Info previously stacked messages, all five fixed stages and logs separately, retained a permanent introduction and omitted artifact notes. The plan extracted Conversation, matched Art's scoped panel/bubbles/cards/clarification/attachments/composer, ordered actual activity chronologically and protected scroll/IME/narrow layouts while preserving scheduling contracts.
 
-Art 的设计是：固定标题和底部输入区，中间独立滚动；用户消息深色右对齐，助手消息浅色左对齐；执行过程按智能体组织为时间线与可折叠卡片，工具记录、当前进展、阶段输出及文件链接分层展示；需求确认使用选项和自定义回答卡；结束后显示交付摘要。输入框使用 Enter 发送、Shift + Enter 换行，运行时发送按钮切换停止入口，中文输入法组合输入不触发发送。用户向上阅读时保留滚动位置。
+## Result
 
-Info 原先将消息、五阶段固定列表和执行日志分别堆叠，始终保留开场介绍，未将阶段产物说明展示在对话区；输入框、状态与确认选项的样式也与 Art 不一致。
+Conversation.tsx, conversation-model.ts and scoped conversation.css replace the old App implementation. Optional stage_results contains only committed summary/notes and disappears on invalidation. No new model calls or raw HTML/JSON tool payloads become ordinary dialogue.
 
-## 方案与计划
+Only started stages are displayed; active cards expand and completed cards collapse. Role events retain up to 200 current-subscription entries; committed results survive refresh, while live tool detail is not presented as durable history. Clarification supports options/custom answers, dismisses to normal input and does not reappear after an answer/completion. Running work retains pause. Without a project, suggestions/upload/input/send are disabled.
 
-1. 提取独立 Conversation 组件，复用 Art 的面板、气泡、执行卡片、需求确认、附件与输入框设计；限定样式作用域，适配 Info 原有工作区。
-2. 根据消息时间和阶段完成时间组织对话，只展示实际开始的阶段；运行中默认展开，完成后折叠，可查看阶段摘要、说明及 Markdown/JSON 文件。
-3. 从正式阶段版本读取输出说明；保留现有五角色、确定性调度、继续执行、阶段重跑与未选项目禁用契约。
-4. 加入自动跟随输出与阅读位置保护，处理中文输入法、运行中暂停、过期确认问题与窄屏内容溢出，再执行类型检查、相关测试与生产构建。
+Completion statistics derive from real sources/facts/components and link to preview/HTML; PDF remains in the work area. Reliable token/time summaries were unavailable at that historical point, so Art's unsupported statistics were not copied. Current performance projection is documented separately. Narrow screens use a bounded scroll panel and fixed composer; reduced-motion preferences are respected.
 
-## 实施结果
+## Historical verification
 
-- 新增 `Conversation.tsx`、`conversation-model.ts` 与限定 `.conversation-panel` 范围的 `conversation.css`，替换 App 内旧对话实现。
-- 项目详情增加可选的 `stage_results`，仅返回已完成阶段的正式摘要与 notes。阶段失效后不再显示旧结果；不新增模型调用，不把 HTML 或 JSON 工具参数作为普通对话输出。
-- 卡片归入对应角色的实时执行记录，最多保留当前浏览器订阅的 200 条事件；刷新后正式阶段结果仍可读取，实时工具明细不作为持久历史展示。
-- 需求确认支持选项与自定义回答，关闭后可回到普通输入；已有用户回答或任务已结束时不重复显示确认卡。运行中保留暂停按钮；无项目时禁用建议、上传、输入与发送。
-- 完成摘要根据实际项目来源、事实及设计组件统计，并提供作品查看与 HTML 下载。PDF 仍在作品区导出。当前没有可靠的 Token 或耗时汇总，因此未复制 Art 的这些统计。
-- 沿用 Art 的自动滚动与向上阅读保护；窄屏为有界高度的独立滚动面板，输入区固定在面板底部；尊重减少动画设置。
-
-## 验证范围
-
-新增 4 项对话行为/服务端渲染测试；原工作流测试补充五角色说明与正式产物一致、失效阶段不返回旧说明的断言。测试覆盖时间顺序、阶段分组、阶段产物链接、外部文本转义、过期确认问题、运行中暂停与无项目禁用。全部 46 项测试、TypeScript 检查与生产构建通过。
-
-浏览器工具返回 `Local browser use is disabled in Work settings`，本轮未进行桌面/窄屏视觉及点击交互验收；服务端渲染测试不能替代真实浏览器交互和视觉检查。本轮不调用用户外部模型或图像服务。
+Four conversation/SSR tests and workflow assertions covered ordering, grouping, committed notes/links, escaping, stale questions, pause and no-project behavior. All 46 tests, TypeScript check and production build passed. Browser tooling reported disabled local browser use at this checkpoint, so desktop/narrow visual interaction was not verified then. No live external model/image service ran. See VALIDATION.md for subsequent checks.

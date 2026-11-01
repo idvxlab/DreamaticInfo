@@ -43,12 +43,12 @@ export default function DesignWorkbench({ project, onLocateFact }: { project: Pr
   const empty = !design && <div className="dw-empty"><FileText size={26} /><h3>{running ? "正在构思故事结构" : "等待叙事草稿"}</h3><p>{progress?.status === "draft" ? "草稿结构暂不可解析，已保存的 Markdown 和待修清单仍可查看。" : "Designer 保存后，故事段落、支撑事实和视觉方案会在这里更新。"}</p>{issues.length > 0 && <button type="button" className="dw-text-button" onClick={() => chooseView("checks")}>查看 {issues.length} 项待修问题<ChevronRight size={13} /></button>}</div>;
 
   return <section className="design-workbench" ref={root} aria-label="逻辑与叙事工作台">
-    {design && <CompositionPlan design={design} />}
     <header className="dw-header"><div className="dw-heading-line"><h2>逻辑与叙事</h2>{design && <span className="dw-status-badge">{draft ? "草稿" : "正式方案"}</span>}{documentUrl && <a className="dw-document-link" href={documentUrl} target="_blank" rel="noreferrer"><FileText size={13} />{draft ? "草稿文档" : "设计文档"}<ArrowUpRight size={11} /></a>}</div>
       {design && <p className="dw-design-title">{design.title}</p>}
       <div className="dw-status-line" role="status" aria-live="polite">{running ? <Loader2 size={12} className="spin" /> : <FileText size={12} />}<span>{status}</span>{draft && progress?.updated_at && <time dateTime={progress.updated_at}>保存于 {new Date(progress.updated_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</time>}</div>
       {design && <div className="dw-overview-counts"><span>{stories.length} 个段落</span><span>{[...selectedIds].filter(id => facts.some(fact => fact.id === id)).length} / {facts.length} 条事实已选用</span><span>{design.components.length} 个视觉组件</span><button type="button" className="dw-text-button" onClick={() => setDrawer({ ids: [], library: true, title: "事实选用" })}><Layers size={12} />查看事实</button></div>}
     </header>
+    {design && <CompositionPlan design={design} />}
     <div className="dw-view-tabs" role="tablist" aria-label="叙事工作视图">{views.map((item, index) => <button type="button" key={item.id} id={`${prefix}-tab-${item.id}`} role="tab" aria-selected={view === item.id} aria-controls={`${prefix}-panel`} tabIndex={view === item.id ? 0 : -1} onClick={() => chooseView(item.id)} onKeyDown={event => {
       const next = event.key === "ArrowRight" ? (index + 1) % views.length : event.key === "ArrowLeft" ? (index + views.length - 1) % views.length : event.key === "Home" ? 0 : event.key === "End" ? views.length - 1 : -1;
       if (next >= 0) { event.preventDefault(); chooseView(views[next].id); document.getElementById(`${prefix}-tab-${views[next].id}`)?.focus(); }

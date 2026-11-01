@@ -6,7 +6,7 @@ import path from 'node:path';
 import { RunMetrics } from '../apps/server/src/run-metrics.js';
 import { documentTemplate, parseDocument, renderDocument } from '../apps/server/src/markdown-protocol.js';
 
-test('composition and complete asset commissions survive Markdown; optional extension does not manufacture fields', () => {
+test('composition and complete asset commissions survive Markdown; missing formal fields are rejected', () => {
   const template = documentTemplate('designer');
   const parsed = parseDocument('designer', template).data;
   assert.ok(parsed.composition);
@@ -15,7 +15,7 @@ test('composition and complete asset commissions survive Markdown; optional exte
   delete parsed.composition;
   parsed.assets = [];
   delete parsed.components[0].asset_ids;
-  assert.deepEqual(parseDocument('designer', renderDocument('designer', parsed)).data, parsed);
+  assert.throws(() => parseDocument('designer', renderDocument('designer', parsed)), /整体设计|素材编号/);
 });
 test('metrics preserve ordered events and wall spans without recording content', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'info-metrics-'));

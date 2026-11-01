@@ -1,3 +1,4 @@
+import { composition } from "./composition.js";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { parse } from "csv-parse/sync";
@@ -200,7 +201,7 @@ const fixtureDataRunner: (...args: Parameters<Runner>) => Promise<Omit<StageResu
     ) => ({
       id,
       type,
-      parent_id: null,
+      asset_ids: [], parent_id: null,
       story_ids: fact_ids.length ? [fact_ids.includes("fact-trend") ? "story-evidence" : "story-intro"] : [],
       fact_ids,
       title: id,
@@ -217,7 +218,7 @@ const fixtureDataRunner: (...args: Parameters<Runner>) => Promise<Omit<StageResu
         behavior: "条形从零展开；减少动态偏好时禁用",
       },
     });
-    const design: Design = {
+    const design: Design = { composition,
       narrative_rationale: "先概览规模与增长，再展示逐年证据，避免只看终点。",
       title: "数据变化测试",
       theme: "测试数据参与趋势（测试）",

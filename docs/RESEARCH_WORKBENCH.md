@@ -1,71 +1,41 @@
-# Researcher 搜索与采集工作台
+# Researcher search and collection workbench
 
-实施日期：2026-10-30。保留五个专业角色、确定性调度和 Markdown 正式交接。
+Implemented 2026-10-30 with five professional roles, deterministic scheduling and Markdown handoffs. The original path lacked a required plan, usable-body distinction, cross-session recovery and pre-report progress. The implementation adds persistent plans/queues, body checks, bounded reuse and read-only source progress. Researcher authors professional plans, not Orchestrator.
 
-## 分析与实施计划
+## Execution
 
-原实现没有强制搜索计划或关键词队列，模型直接执行搜索；抓取结果未区分正文和验证页；新会话未读取中间成果；来源页面只依赖最终 research.md。由此可能重复搜索、重复抓取，并在最终报告之前无法判断进展。
+1. Read the complete Brief, intent.md, uploads and read_research_progress.
+2. Save objectives, scope/definitions, priority sources, stopping conditions and keyword tasks with save_search_plan. Upload-only work still needs a plan with an empty queue.
+3. search_web uses an existing task_id; it cannot bypass the plan with arbitrary keywords. Tasks retain IDs, questions, keywords, priorities, targets, status, candidates, attempts, times and errors.
+4. fetch_source accepts URL/task_id, reuses valid bodies first, then obtains public HTTPS material. Readable bodies become accepted; challenge/login/subscription/empty/short/error-data pages are rejected, network failures failed. Accepted is not proof of factual correctness or authority.
+5. Preserve complete readable Markdown and raw responses. Formal research may cite only current-scope registered network sources with usable matching content digests.
+6. Sources displays plans/tasks/candidates/bodies/diagnostics before formal completion, then official sources separately.
 
-实施顺序为：持久化 Markdown 计划与队列 → 正文检查 → 跨会话复用与并发保护 → 数据来源页中间成果 → 自动化验证。计划内容仍由 Researcher 制定，Orchestrator 不代替模型开展专业调研。
+Plan tables represent ID, question, keywords, priority and target source using the supplied protocol headers or accepted English names. Priorities are 1–3, highest first. IDs and keywords are unique. Revised plans retain results for unchanged queries; removed tasks are archived and reusable if restored. Preserve every plan revision.
 
-## 使用流程
+## Storage and reuse
 
-1. Researcher 阅读完整 Brief、intent.md、上传资料和 read_research_progress。
-2. 首次执行先调用 save_search_plan，保存 Markdown 调研目标、范围、统计口径、优先来源、停止条件和关键词队列。纯上传资料也需计划，队列可以写“无”。
-3. search_web 按 task_id 搜索已有队列，不能绕过计划临时发送任意关键词。队列记录编号、问题、关键词、优先级、目标来源、状态、候选、请求次数、时间和失败原因。
-4. fetch_source 指定 URL 与 task_id，先检查已有正文，再获取公开 HTTPS 资料。有效技术正文标记 accepted，验证码、登录/订阅限制、空页、过短正文及错误 JSON 标记 rejected，网络错误标记 failed。accepted 不代表事实正确或来源权威。
-5. 可用正文保留完整 Markdown 和原始响应。提交正式报告时只允许引用当前调研范围内通过正文检查的网络来源，并核对正文摘要。
-6. “数据来源”实时显示计划、关键词、候选、可读正文和诊断；完成正式报告后，正式来源在独立区域展示。
+- research/runs/<scope>/progress.json: internal plan, queue, archived queries and source records.
+- research/runs/<scope>/plan-N.md: original Markdown plan versions.
+- research/web-<UUID>.md: readable body or rejection diagnostic.
+- research/web-<UUID>.raw.txt: raw response; rendered archives are described in WEB_READER.md.
+- execution-log.md: tool progress, checks and errors.
+- research.md: the formally submitted report.
 
-计划使用如下表头：
+Scope binds full requirements, upload IDs/digests, intent and body thresholds. Pause/retry/restart reuse same-scope successes; changed inputs use an independent scope and never silently adopt old evidence. Search keys include connection, credential digest and result count. Failures require explicit retry=true; changed connections receive their own request budget. URLs deduplicate without fragments; concurrent identical requests share work and may associate multiple tasks. Missing/tampered bodies invalidate cache.
 
-| 编号 | 问题 | 关键词 | 优先级 | 目标来源 |
-| --- | --- | --- | --- | --- |
-| Q1 | 需要核实的指标 | 实际搜索关键词 | 1 | 优先机构或资料 |
+State changes serialize atomically; network work runs outside locks and merges completion. Interrupted running/fetching records become explicit retryable failures on reopen, not a blank plan.
 
-优先级为 1–3，1 最高。编号、关键词不能重复。调整计划保留相同关键词的执行结果，移除项保存在内部历史中，重新加入时可复用；每次计划原文另存版本。
+## Configuration and API
 
-## 保存位置与复用范围
+Search advanced settings persist to .env. DREAMATIC_SOURCE_MIN_TEXT_CHARS defaults to 180, DREAMATIC_RESEARCH_MAX_TASKS to 40 and DREAMATIC_RESEARCH_REQUEST_ATTEMPTS to 3. Short parseable structured data has separate handling. Existing network, result-count and stage/run budgets still apply. Exhaustion requires a different source/query, deliberate configuration change or a disclosed gap, not unlimited retry.
 
-项目工作目录内：
+GET /api/projects/:id projects research_progress. GET /research/plan returns the original plan; /research/sources/:sourceId/text or raw returns plain content from current-scope server records after path checks. There is no arbitrary file-path argument.
 
-- research/runs/<范围摘要>/progress.json：程序内部状态，包括计划原文、当前队列、历史查询和来源记录。
-- research/runs/<范围摘要>/plan-N.md：Markdown 计划版本。
-- research/web-<UUID>.md：可读正文或拒绝诊断文本。
-- research/web-<UUID>.raw.txt：采集的原始文本响应。
-- execution-log.md：工具进度、校验结果和错误。
-- research.md：完成并正式提交后的调研报告。
+Search snippets/readability do not prove accuracy, authority, completeness or comparable definitions. Researcher/Analyst must verify those. There is no CAPTCHA bypass or automatic unlocking; remote binary PDF/Office files require upload. Dynamic extraction may be incomplete.
 
-调研范围由完整需求、上传资料编号/摘要、需求报告内容和正文检查阈值确定。同范围的暂停、阶段重试和服务重启会保留缓存；需求或相关资料变化后使用独立范围，文件保留，避免把旧范围成果自动当作当前证据。
+## Verification history
 
-搜索结果按连接、密钥摘要和结果数量区分，成功结果直接复用，不再次发起请求。失败需显式 retry=true；连接配置改变后开启该配置的请求预算。URL 去除片段标记后去重，同一链接并发调用共享请求，来源归属可关联多个任务。正文被改动或文件缺失时不能继续作为有效缓存，重新采集。
+The initial 63-test checkpoint covered plan/settings constraints, body/error-page extraction, deduplication/serialized state, request budgets, interruption, plan/session reuse, tamper detection, scope isolation, rejection, SSR and HTTP access before report completion. Native Pi used local deterministic providers and temporary directories; no live paid model/topic research occurred. Browser tooling was disabled at that historical checkpoint, so SSR was not presented as visual verification.
 
-项目/范围内的状态修改串行原子落盘，网络请求在锁外执行，完成时合并结果，避免并行工具调用丢失记录。进程中断留下的 running/fetching 在新会话打开时标记为失败并说明可重试；不是从零重新生成计划。
-
-## 设置
-
-Settings → 搜索引擎 → 高级选项，统一保存于 .env，应用于后续任务：
-
-| 字段 | 默认值 | 用途 |
-| --- | --- | --- |
-| DREAMATIC_SOURCE_MIN_TEXT_CHARS | 180 | 普通网页正文长度门槛；短小且可解析的结构化数据另行识别 |
-| DREAMATIC_RESEARCH_MAX_TASKS | 40 | 单份计划最多关键词数 |
-| DREAMATIC_RESEARCH_REQUEST_ATTEMPTS | 3 | 搜索按连接配置、链接按调研范围累计的请求次数上限 |
-
-原有网络超时、返回条数及阶段总时限继续生效。达到请求上限后需要换来源/关键词、调整设置或说明资料缺口，不能无限自动重试。
-
-## 展示和边界
-
-GET /api/projects/:id 的 research_progress 提供当前范围的中间成果；GET /api/projects/:id/research/plan 返回计划原文；GET /api/projects/:id/research/sources/:sourceId/text 或 raw 返回纯文本内容。只从当前范围的服务端登记中定位文件，并经过项目路径检查；不允许直接传任意文件路径。
-
-搜索摘要和正文可读性检查不能证明资料真实、权威、完整或满足统计口径；Researcher 和 Analyst 仍需核对。没有绕过验证码或反爬限制，不使用浏览器自动解锁页面；二进制远程 PDF/Office 仍需用户下载上传。原始网页导航或复杂动态内容的提取可能不完整。
-
-## 验收
-
-完整 63 项测试、严格类型检查、生产构建通过。新增验证覆盖计划约束与配置、正文提取与错误页面、并发去重/串行保存、失败预算/中断恢复、跨会话与计划修订复用、正文篡改检查、跨需求范围隔离、不可用来源拒绝、服务端组件渲染，以及未完成报告前的 HTTP 计划/正文/原始响应读取。
-
-使用隔离临时目录、注入传输与真实 Pi SDK 对接本地确定性服务；没有调用用户外部模型或开展真实主题调研。浏览器工具因 Work 设置禁用，桌面/窄屏视觉与点击交互未实测，服务端渲染测试不能代替视觉验收。
-
-网页阅读链路已升级为 Cookie + Readability + Turndown Markdown，自动回退隔离 Playwright；保留表格、链接、跳转与诊断。相关原始/渲染存档和设置见 WEB_READER.md。
-
-2026-10-31：普通网页使用受控 CONNECT 出口的原生 Chromium；PMC/PubMed 优先且仅用官方指定接口。进展中的 content_scope 区分摘要与开放全文，来源局限写入可读 Markdown 并展示。读取策略版本变化允许历史失败重新尝试，已有成功资料继续复用；详见 WEB_READER.md。
+The reader later adopted cookies, Readability/Turndown and controlled native Chromium, with raw/rendered archives, official PMC/PubMed APIs and explicit abstract/full-text scope. Reader-policy versions allow bounded retries of historical failures while valid successes remain reusable. See [WEB_READER.md](WEB_READER.md) and [VALIDATION.md](VALIDATION.md).

@@ -1,3 +1,4 @@
+import PerformancePanel from "./PerformancePanel";
 import DesignWorkbench from "./DesignWorkbench";
 import AnalysisProgress from "./AnalysisProgress";
 import FactCard from "./FactCard";
@@ -361,6 +362,8 @@ export default function App() {
               ))}
             </div>
             <div className="canvas-content">
+              {project && !!project.retained_documents?.length && <aside className="retained-results-notice" role="status"><strong>已保存的报告仍然保留</strong><p>当前流程正在重新生成或等待执行，旧报告暂不作为有效成果展示。可只读查看已保存内容。</p><div>{project.retained_documents.map(name => <a key={name} href={`/api/projects/${project.id}/retained-document/${name}`} target="_blank" rel="noreferrer">{({ 'intent.md': '需求报告', 'research.md': '调研报告', 'datafacts.md': '事实报告', 'design.md': '设计报告', 'delivery.md': '交付报告' } as Record<string,string>)[name]}<ArrowUpRight size={12}/></a>)}</div></aside>}
+
               {!project && (
                 <div className="welcome">
                   <div className="welcome-art" aria-hidden="true">
@@ -496,6 +499,7 @@ export default function App() {
                       </div>
                     )}
                   </div>
+                  {project.performance && <PerformancePanel performance={project.performance} />}
                   {project.has_html ? (
                     <div className="preview-frame">
                       <iframe

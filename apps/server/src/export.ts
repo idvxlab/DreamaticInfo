@@ -1,3 +1,4 @@
+import { hash } from "./validation.js";
 import { RunMetrics } from "./run-metrics.js";
 import { browserOptions } from "./browser.js";
 export { browserOptions } from "./browser.js";
@@ -16,6 +17,12 @@ export async function exportPdf(
   const artifact = await readArtifact(p, "builder");
   if (!artifact) throw new Error("请先完成信息图");
   const design = (await readArtifact(p, "designer"))?.data;
+  const target = path.join(projectDir(p.id), "output/poster.pdf");
+  const cacheKey = hash({ contract: "pdf-1", html: artifact.data.html, page: design.page, browser: setting("DREAMATIC_CHROME_PATH") });
+  try {
+    const meta = JSON.parse(await readFile(target + ".meta.json", "utf8"));
+    if (meta.cache_key === cacheKey && hash((await readFile(target)).toString("base64")) === meta.pdf_digest) return target;
+  } catch {}
   const timeout = Number(setting("DREAMATIC_PDF_TIMEOUT_MS")),
     started = Date.now();
   const metrics = new RunMetrics(projectDir(p.id));
@@ -61,17 +68,10 @@ export async function exportPdf(
     });
     if (buf.subarray(0, 5).toString() !== "%PDF-")
       throw new Error("PDF validation failed");
-    const target = path.join(projectDir(p.id), "output/poster.pdf");
-    await atomic(
-      target + ".meta.json",
-      JSON.stringify({
-        created_at: new Date().toISOString(),
-        builder_version: p.state.stages.builder.version,
-      }),
-    );
     const { writeFile, rename } = await import("node:fs/promises");
     await writeFile(target + ".tmp", buf);
     await rename(target + ".tmp", target);
+    await atomic(target + ".meta.json", JSON.stringify({ created_at: new Date().toISOString(), builder_version: p.state.stages.builder.version, cache_key: cacheKey, pdf_digest: hash(buf.toString("base64")) }));
     endPdf();
     return target;
   } catch (error) {

@@ -1,22 +1,6 @@
-import { hash } from "./validation.js";
 import type { ProviderImages } from "@earendil-works/pi-ai";
 import { setting } from "./config-store.js";
 import { publicGet } from "./network.js";
-export function imageCacheKey(
-  assetId: string,
-  prompt: string,
-  model: { id: string; baseUrl: string },
-) {
-  return hash({
-    asset_id: assetId,
-    prompt,
-    model: model.id,
-    baseUrl: model.baseUrl,
-    endpoint: setting("DREAMATIC_IMAGE_GENERATION_ENDPOINT"),
-    responseFormat: setting("DREAMATIC_IMAGE_RESPONSE_FORMAT"),
-    size: setting("DREAMATIC_IMAGE_DEFAULT_SIZE"),
-  });
-}
 /** OpenAI-compatible transport, exposed through Pi's public ProviderImages contract.
  * Same request fields as Dreamatic Art's image-request.ts; no runtime internals. */
 export const infoImageProvider: ProviderImages = {
@@ -48,6 +32,7 @@ export const infoImageProvider: ProviderImages = {
         size:
           options?.metadata?.size || setting("DREAMATIC_IMAGE_DEFAULT_SIZE"),
         ...(format === "auto" ? {} : { response_format: format }),
+        ...(options?.metadata?.background === "transparent" ? { background: "transparent" } : {}),
       }),
     });
     if (!response.ok) {

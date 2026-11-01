@@ -1,3 +1,4 @@
+import { structureIssues } from "../../../packages/shared/structure.js";
 import { hasMixedUnits } from "../../../packages/shared/units.js";
 import { verifyCalculation } from "./source-calculation.js";
 import type { Project, Research, AnalysisIssue } from "../../../packages/shared/types.js";
@@ -21,7 +22,9 @@ export async function analystIssues(p: Project, data: any, research: Research, e
     seen.add(fact.id);
     if (!fact.source_ids?.length || !fact.evidence?.length) add("证据", "缺少来源或证据", "从来源目录复制编号，通过 read_evidence 读取逐字证据");
     for (const id of fact.source_ids ?? []) if (!known.has(id)) add("来源编号列表", `未知来源编号 ${id}`, "使用 read_source_catalog 给出的原始编号，不重命名为 S-01 等别名");
-    for (const [index, item] of (fact.evidence ?? []).entries()) {
+    if (!schemaErrors("datafacts", { summary: "", facts: [fact] }).length) for (const message of structureIssues(fact)) add("结构数据", message, "依据正式来源修正结构，不制造数值或连线");
+    const records = fact.structure ? [...fact.structure.events ?? [], ...fact.structure.nodes ?? [], ...fact.structure.edges ?? [], ...fact.structure.observations ?? []] : [];
+    for (const [index, item] of [...fact.evidence ?? [], ...records].entries()) {
       const where = `第 ${index + 1} 条证据`;
       if (!known.has(item.source_id)) { add(where, `未知来源编号 ${item.source_id}`, "复制目录中的原始来源编号"); continue; }
       if (!fact.source_ids.includes(item.source_id)) add(where, "证据来源不在本事实来源列表中", "将该原始编号加入来源编号列表");
@@ -30,6 +33,11 @@ export async function analystIssues(p: Project, data: any, research: Research, e
         if (!sources.has(item.source_id)) sources.set(item.source_id, await loadEvidenceSource(p, known.get(item.source_id)!));
         if (!matchingEvidence(sources.get(item.source_id)!, item.quote, item.location)) add(where, `引文不在对应来源中（需匹配同一证据块）：${item.quote.slice(0, 180)}`, `调用 read_evidence，source_id=${item.source_id}；复制原文及证据块编号，不增添冒号、年份或拼接单元格`);
       } catch (error) { add(where, `来源文件无法核验：${String(error)}`, "检查该来源文件，不得改用其他来源代替此编号"); }
+    }
+    if (fact.structure) {
+      const includesNumber = (quote: string, value: number) => (quote.match(/[-+]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? []).some(token => Number(token.replaceAll(',', '')) === value);
+      for (const observation of fact.structure.observations ?? []) if (!observation.quote.split(/\r?\n/).some((line: string) => includesNumber(line, observation.x) && includesNumber(line, observation.y))) add("配对观测", `${observation.id} 的 x/y 不在本条证据中`, "从同一实际观察的来源片段复制配对值，不拼接不同对象或编造观测");
+      for (const event of fact.structure.events ?? []) if (!event.quote.includes(event.date)) add("事件日期", `${event.id} 的日期不在本条证据中`, "使用证据原文的 ISO 日期；不能猜测日期精度");
     }
     const spec = fact.specification;
     if (spec) {

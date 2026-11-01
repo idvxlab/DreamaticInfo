@@ -1,49 +1,32 @@
-# 逻辑与叙事界面重组
+# Narrative workbench UI reorganization
 
-日期：2026-10-31。设计分析使用 Anthropic 的 frontend-design skill，沿用 Dreamatic · Art / Web 的现有设计语言。
+Date: 2026-10-31. Design investigation used the frontend-design guidance and retained Dreamatic Art/Web's established language. The original workbench stacked oversized status/counts, message blocks, directories, relationships, components, full fact cards and technical checks in a constrained central pane. Repetition overwhelmed the first screen; viewport width did not represent actual pane width.
 
-## 代码调查
+## Plan and layout
 
-此前 DesignWorkbench 将状态、统计大卡、深色主线块、故事目录、段落说明、关系、视觉组件、完整事实卡、未选事实、技术参数和待修清单连续排列。主工作区与右侧对话并列，实际宽度有限；重复信息与多个默认展开区域抢占首屏，模型输出增多后页面更长。按 viewport 判断单双栏也不能反映工作区的实际宽度。
-
-## 方案与实施顺序
-
-1. 压缩顶部标题、状态、保存时间及统计信息，保留一处待修数量。
-2. 增加叙事编排、视觉方案、检查三种工作视图，默认进入叙事。
-3. 以段落为主从结构，事实先显示核心值、单位和来源简称；完整证据按需打开工作台内抽屉。
-4. 集中展示页面布局示意、分组组件表及单个组件详情；技术参数默认收起。
-5. 将错误集中成可筛选检查表，并提供段落/组件定位；自动更新不改变视图、选择或滚动位置。
-6. 使用临时测试数据验证首屏、信息密度、键盘焦点、草稿更新、窄工作区和正式方案切换。
-
-布局草图：
+Compress title/status/time/counts; provide narrative, visual plan and checks views; use section master/detail with compact facts and on-demand evidence; group components and collapse technical parameters; centralize filterable diagnostics with precise location. Preserve view/selection/scroll during updates and test real pane widths.
 
 ```text
-逻辑与叙事   草稿                         草稿文档
-设计标题 / 保存状态 / 一行概况
-叙事编排          视觉方案          检查（2）
-整体主线：摘要                               展开
-┌ 故事线目录 ┐  ┌ 当前段落 ────────────────────┐
-│ 01 ...     │  │ 本段结论与说明              │
-│ 02 ...     │  │ 紧凑的支撑事实条目          │
-│ 03 ...     │  │ 选材理由 / 关系：按需展开   │
-└────────────┘  └────────────────────────────┘
+Narrative and design | Draft                         Document
+Design title / save status / compact counts
+Narrative             Visual plan              Checks (2)
+Overall rationale summary                            Expand
+Section directory    Current section
+01 ...               Conclusion and explanation
+02 ...               Compact supporting facts
+03 ...               Selection rationale / relations on demand
 ```
 
-配色保留背景 #E8E7E1、内容纸色 #F6F5F0、文字 #20211D、草绿 #C9E46B、警示 #D76942。字体沿用现有中文无衬线；视图标题约 19px、段落标题 18px、正文 13px、辅助信息 10–12px。草绿用于选中，橙色用于异常；移除重复大标题、统计大卡和旧版闲置样式。正文左对齐，以主从关系和分组表达层级。
+Retain #E8E7E1 background, #F6F5F0 paper, #20211D ink, #C9E46B lime and #D76942 warning. Use existing system/PingFang fonts, about 19px view titles, 18px section titles, 13px body and 10–12px supporting text. Lime denotes selection and orange issues. Remove duplicated big headings/count cards/unused styles. Left alignment and grouping establish hierarchy.
 
-## 实现与交互
+## Components and interaction
 
-- DesignWorkbench：紧凑头部、三个可键盘切换的 tab、整体主线折叠、故事目录/段落详情和集中检查表。
-- DesignVisualPlan：按当前设计坐标绘制 SVG 布局示意，按段落分组列出组件；一项组件只在默认分组中出现一次，多段关联仍保留。坐标或页面尺寸非法时不绘图，明确提示。选择后在对应表格行下展开组件说明，映射与交互参数默认折叠；布局示意仅随明确选择定位，轮询不抢滚动。
-- DesignEvidenceDrawer：原生模态 dialog 放在工作台边界内，支持 Escape、关闭后焦点恢复和来源查看；保留两端事实、已选/未选筛选及跨 Tab 定位。事实卡和原始数据展示复用现有组件，字号与引文对比度按抽屉阅读调整。
-- 工作区以 container query 判断宽度，640px 以下将目录切成下拉选择，视觉方案变为单列。右侧对话不重排。
-- 只在用户定位时滚动；轮询更新保持视图、目录选中项、详情和滚动位置。状态与检查计数跟随已保存数据，不虚构模型思考或执行百分比。
-- 失效草稿继续隐藏旧内容；无法解析时保留文档和检查入口。草稿/正式提交边界及全部后端校验协议保持原有契约。
+DesignWorkbench provides compact header, keyboard-switchable tabs, collapsed overall rationale, section master/detail and checks. DesignVisualPlan draws validated reference geometry as SVG and groups components by section. A component appears once in its default group while multiple associations remain available. Invalid dimensions/coordinates disable the map with a clear message. Details expand below the selected row; mappings/interactions default closed. Only explicit selection scrolls the map.
 
-## 验收
+DesignEvidenceDrawer uses an in-workbench modal dialog with Escape and focus restoration, original evidence/sources, both relation endpoints, selected/unselected filters and cross-tab fact location. Reuse fact/data components with readable evidence contrast.
 
-完整 126 项测试、严格类型检查与生产构建通过。新增 UI 测试覆盖默认任务视图、默认不暴露完整证据/错误流、失效及不可解析草稿、文本转义、异常页面尺寸不绘图、多段组件不重复列出。
+Container queries switch directories to a selector below 640px and visual plans to one column; the right conversation remains independent. Polling preserves view, selection, expansion and scroll; counts/status reflect saved data rather than fictional model thinking. Stale scopes stay hidden; malformed drafts retain document/check access. Backend validation and formal submission boundaries remain intact.
 
-独立 `tests/fixtures/narrative-preview.mts` 使用 7 段故事、28 个组件的临时数据与隔离 Chromium 验证：首屏看到当前段落、证据与两端关系抽屉、Escape/焦点恢复、检查范围与定位、组件选择、轮询不跳视图/抢滚动、事实范围筛选、键盘 tab 切换、按工作区宽度切单列、390px 手机抽屉边界及正式方案切换，无页面异常。截图仅保存在临时目录，测试项目结束后删除；产品不导入测试素材。
+## Verification
 
-没有运行外部付费模型或重写用户项目；本轮主要改变呈现和交互，模型内容质量仍需结合真实素材评估。
+The historical 126-test checkpoint passed strict TypeScript/build and UI tests for default views, evidence/check disclosure, stale/malformed drafts, escaping, invalid geometry and unique multi-section listing. The isolated narrative-preview.mts uses seven sections and 28 components with temporary projects and Chromium. It checks first-screen reading, endpoint/evidence dialog, Escape/focus, filters/location, component selection, polling stability, keyboard tabs, container layout, 390px dialog bounds and formal switching without page errors. Screenshots stay temporary and product code imports no fixtures. No paid external model or user project was executed.

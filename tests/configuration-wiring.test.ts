@@ -1,3 +1,4 @@
+import { composition } from "./fixtures/composition.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
@@ -15,7 +16,7 @@ const { getModels, runtime, resetRuntime } =
   await import("../apps/server/src/pi.js");
 const { Orchestrator } = await import("../apps/server/src/orchestrator.js");
 const { searchWeb } = await import("../apps/server/src/network.js");
-const { infoImageProvider, imageCacheKey } =
+const { infoImageProvider } =
   await import("../apps/server/src/image-provider.js");
 const { browserOptions, exportPdf } =
   await import("../apps/server/src/export.js");
@@ -219,17 +220,6 @@ try {
       /1MB/,
     );
   });
-  await test("image cache changes when the configured generation endpoint changes", async () => {
-    const model = {
-      id: "fixture-image",
-      baseUrl: "https://images.example.test/v1",
-    };
-    const before = imageCacheKey("asset", "fixture", model);
-    await save({
-      DREAMATIC_IMAGE_GENERATION_ENDPOINT: "https://images.example.test/custom",
-    });
-    assert.notEqual(imageCacheKey("asset", "fixture", model), before);
-  });
   await test("image transport uses endpoint, inherited key, format, size and byte limit", async () => {
     await save(
       {
@@ -289,9 +279,9 @@ try {
     });
     const p = await store.create("PDF timeout fixture", "live");
     const design = {
-      title: "PDF fixture", narrative_rationale: "打印配置测试", theme: "fixture", font: "system-ui", palette: [], storyline: [{ id: "intro", title: "Fixture", description: "Fixture", rationale: "打印配置测试，不涉及数据", fact_ids: [] }], assets: [],
+      composition, title: "PDF fixture", narrative_rationale: "打印配置测试", theme: "fixture", font: "system-ui", palette: [], storyline: [{ id: "intro", title: "Fixture", description: "Fixture", rationale: "打印配置测试，不涉及数据", fact_ids: [] }], assets: [],
       page: { width: 960, height: 1200, background: "#fff" },
-      components: [{ id: "heading", type: "heading", parent_id: null, story_ids: [], fact_ids: [], title: "Fixture", description: "Fixture", layout: { x: 0, y: 0, width: 400, height: 200 }, mapping: { label_field: "", value_field: "", unit: "" }, interaction: { trigger: "", behavior: "" }, animation: { trigger: "", behavior: "" } }],
+      components: [{ id: "heading", type: "heading", asset_ids: [], parent_id: null, story_ids: [], fact_ids: [], title: "Fixture", description: "Fixture", layout: { x: 0, y: 0, width: 400, height: 200 }, mapping: { label_field: "", value_field: "", unit: "" }, interaction: { trigger: "", behavior: "" }, animation: { trigger: "", behavior: "" } }],
     };
     await store.commit(p, "designer", design, "fixture", "fixture", renderDocument("designer", design, "fixture"));
     const builder = { html: `<!doctype html><html><head><meta charset="utf-8"><title>PDF configuration fixture</title></head><body><h1 data-component-id="heading">PDF fixture</h1><p>This isolated test checks the configured browser launch and page-operation timeout. It contains no user material.</p></body></html>`, summary: "fixture" };

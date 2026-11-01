@@ -1,39 +1,25 @@
-# D3 可视化接入
+# D3 visualization integration
 
-## 分析与方案
+The project pins D3 7.9.0 and @types/d3 7.4.3. Public D3 APIs provide scales, shapes, axes and selection behavior; they do not replace Analyst evidence or calculations. There are still exactly five professional roles and no model configuration for Orchestrator.
 
-原来的事实卡片直接计算 SVG 柱高与宽度，趋势也用条形表达，没有统一的比例尺、数值刻度、真实时间间隔或完整数据明细。Builder 自行输出 HTML；远程脚本又受离线交付和预览 CSP 限制，因此只在提示词中建议 CDN 无法接通实际作品。
+## Workbench charts
 
-本次分三层实施：
+FactChart uses shared chart geometry and React SVG: trends, bars for distributions/comparisons/categories/extrema/outliers, ranked horizontal bars and percentage donuts. Scalars and associations without real paired observations remain text/values. Structural scatter uses explicit source-linked observations, not invented pairs.
 
-1. 统一工作台图形计算，交给 D3 比例尺、折线及环形布局，React 继续负责 SVG DOM，沿用 Art 的纸色、草绿和橙色。
-2. 给 Designer/Builder 提供原生只读 `read_visualization_guide` 工具、专业 Skill 和任务约束；Builder 直接使用全局 `d3`。
-3. 保存/正式提交 HTML 时，从本地依赖内嵌官方运行库及许可，复用原有预览与 PDF 链路，验证数据边界、离线交付和实际浏览器交互。
+Year/year-month/date labels use UTC elapsed intervals. Unknown labels remain ordered categories with disclosure. Recognized invalid dates, duplicate/reversed times and unstable spans produce diagnostics with original data retained. Values, labels, units and order are not silently changed. Dense charts reduce tick labels, never observations. Mixed units cannot share a numeric axis.
 
-采用固定版本 `d3@7.9.0`、`@types/d3@7.4.3`。实施时通过 npm 核对当前发布版本，并参考 [D3 官方入门文档](https://d3js.org/getting-started)，使用其 React 中计算几何、由 React 渲染的方式。
+Mouse/focus/arrow/Home/End navigation exposes readings. SVG title/desc and expandable complete tables preserve accessibility. The percentage remainder is explicitly mathematical completion to 100%, not a separately collected category. D3 pie/arc handles zero and 100%.
 
-## 事实卡片
+## Self-contained Builder artifacts
 
-- `packages/shared/chart-geometry.ts`：D3 scaleLinear/scaleBand/scalePoint 和 line；条形包含零基线，支持负数；重复标签按观测索引定位，不合并数值。
-- `apps/web/src/FactChart.tsx`：趋势折线、排名水平条形、具有序列的分布/对比/分类/极值/异常条形、百分比环图。D3 pie/arc 处理 0% 和 100%。标量及缺乏成对数据的相关事实保留数值显示。
-- 完整年、年月和日期标签使用 UTC 时间戳间隔；不认识的标签按类别顺序定位，并明确描述。已识别的非法日期、倒序或重复时间会提示核对，保留原始明细，不擅自重排。
-- 原始值、标签、单位和顺序保留；刻度仅用于位置读数。密集类别仅减少轴标签，不减少观测。混合单位不画同轴图；非有限数或不稳定跨度回退到提示与明细。
-- 鼠标、焦点、方向键、Home/End 可查看读数；图表带 title/desc，明细可展开。占比的余量标明为补足 100% 的数学余量，避免误认为独立采集类别。
+visualization-runtime.ts reads the installed official UMD distribution and ISC license, embeds it once before author scripts and keeps UTF-8 metadata first. Repeated packaging is idempotent. read_visualization_guide sends API/data guidance, not library source.
 
-## Builder 与离线作品
+save_html validates references/HTML and embeds the runtime; store.commit uses the same packaging. Official artifacts and output/index.html therefore match. External script/link resources remain prohibited; CSP connect-src is none. Runtime version/digest participates in Builder fingerprints without altering role configuration.
 
-`apps/server/src/visualization-runtime.ts` 读取已安装的官方 UMD 包，在作者脚本之前内嵌一次，并保留 ISC 许可。重复保存是幂等的，UTF-8 元数据先于运行库。指南只返回 API 和数据契约，不向模型发送完整库源码。
+Designer/Builder must preserve official values, units, mappings and IDs. Bar domains include zero; lines respect real time; donuts require a genuine whole/denominator. Use real paired observations for scatter and explicit structural edges for processes/hierarchy. No CDN, remote fonts, d3.csv/json/fetch or external data dependency is allowed. Existing projects are not automatically rewritten.
 
-`save_html` 先做原有 HTML/引用校验，再嵌入；`store.commit` 的 Builder 分支也执行同一处理，确保最终 artifact 与 output/index.html 一致。外部 script/link 仍被拒绝，CSP 的 connect-src 'none'、资源限制与事实/组件标记检查继续生效。运行库版本和摘要进入 Builder 输入指纹，不改变其他专业角色的模型配置。
+## Verification
 
-Designer/Builder 需要使用正式事实的数值、单位、mapping 与编号，通过 D3 比例尺、形状、坐标轴及选择集实现图表；不能让工具包替代 Analyst 推测统计值。没有成对观测时不画散点相关图。禁止 CDN、远程字体、d3.csv/json/fetch 及依赖外部数据的作品。
+The original integration added seven tests and passed 133 total, covering signs/zero/constants/singletons, dense/duplicate labels, real/invalid time, raw records/units, percentage boundaries, official license/version/order/idempotence and remote dependency rejection. Actual Chromium used embedded D3 under production CSP, made zero requests and produced valid PDF. Native Pi against a local deterministic provider exercised guide/save_html/Markdown submission.
 
-已有 HTML 不会被后台直接重写；后续运行根据新的 Builder 指纹生成新作品。本次没有修改用户项目或触发模型运行。
-
-## 验证与边界
-
-新增 7 项自动化，覆盖正负零、常量/单点、密集与重复类别、真实时间间隔及错误时间、原始数据/单位、百分比边界、无误导图形、运行库版本/许可/顺序/幂等与 CDN 拒绝。真实 Chromium 在生产预览 CSP 下使用内嵌 D3 画图，确认无网络请求并生成有效 PDF。
-
-原生 Pi 本地确定性会话覆盖读取 D3 指南、save_html 与 Markdown 正式提交；全流程测试确认持久化、指纹恢复与 PDF。生产浏览器使用 tests/fixtures 下的隔离资料验证十类事实、七个有足够数据的 D3 图表、排名关注对象、方向键读数、完整数据表和 390px 图表边界。
-
-未使用外部模型验证实际主题的生成质量；提示词和引用检查无法证明任意生成 JavaScript 中每个数据绑定都正确。静态图表与离线链路已验证，复杂 Canvas/动画或额外布局仍需各自验收。
+Isolated taxonomy-preview.mts verifies ten statistical labels, seven eligible charts, rank focus, keyboard reading, full tables and 390px bounds. Current structural/browser coverage is recorded in VALIDATION.md. No external model generation-quality claim follows from these tests; arbitrary generated JS bindings, Canvas, animation and extra layouts still require verification.

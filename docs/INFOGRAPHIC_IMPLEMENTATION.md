@@ -1,30 +1,43 @@
-# 信息图能力增量与验证边界（2026-11-01）
+# Infographic implementation and verification boundaries
 
-本次在已有未提交的 D3/叙事工作台改动上增量实现，未升级 Pi、未改变五角色配置或调度职责。
+Updated 2026-11-01. The only formal protocol is infographic-markdown-2026; there is no old reader or migration.
 
-## 已实现
+## Structure and roles
 
-- `state/performance.jsonl` 按 run 保存阶段尝试、工具耗时/失败、模型返回的 usage、运行状态、正式交付墙钟与按需 PDF 时间；不记录提示词、密钥或输出正文。阶段重试不覆盖旧记录。交付 wall_ms 从项目创建起算，包含草稿等待；尚不是严格的“首次有效需求”口径。
-- Designer Markdown 模板包含可组合的任务/阅读/媒介、四层整体设计及安全区域。素材 commission 包含语义、事实引用、位置/留白、透明、裁切、层叠、事实边界、验收与替代；组件 asset_ids 建立使用关系。程序拒绝未知引用、无依据的信息性素材、未使用委托及生成图片承担精确数据编码。
-- 素材缓存摘要加入正式素材委托，修改尺寸、风格、事实边界等会得到不同键。
-- Builder `check_render` 使用一个 Chromium 会话检查桌面、390px 移动与打印媒体；禁止网络并应用预览 CSP，等待字体/图片，报告脚本异常、坏图、水平越界和部分裁切。总时限 45 秒，支持取消。它是可调用工具，目前并非提交硬门槛。
-- 角色提示与设计 Schema 摘要参与阶段指纹。变更相应角色契约会使该阶段及后续失效；不转换已有项目。新增设计字段在读取旧 Markdown 时可省略，旧的完整字段仍必须存在。带素材的旧扁平表格需按当前模板重新提交为条目章节，因为素材现可包含嵌套委托。
+Five professional roles have independent model settings. Deterministic Orchestrator has neither a model nor creative responsibility. Stages follow real dependencies. After formal design, AssetService's two-job queue overlaps Builder implementation. Each official commission has one task; models cannot override its prompt.
 
-## 尚未实现，不能声明支持
+Ten statistical fact types retain independent derivation and source-calculation receipts. timeline/process/hierarchy/scatter use structure. Events, nodes, edges and paired observations directly carry source_id/quote/location, avoiding evidence nesting beyond Markdown's six heading levels. Statistical facts must not include unrelated structure.
 
-- 时间线、流程/层级、散点的完整上游数据、映射、专项校验与工作台绘图；地图、网络、桑基继续不支持。
-- 素材预启动/有界并发、生成与骨架重叠、生成失败自动使用替代、素材使用后的实际 HTML 核对。
-- 截图驱动 Designer 视觉复核、跨角色明确路由、局部区域复核和统一端到端返修预算。
-- 完整遮挡、可测对比度、打印裁切和 HTML/PDF 内容一致性检查。
-- 首次可查看预览时间、有效需求起点、等待/主动暂停区间闭合、模型墙钟/上下文规模与关键路径聚合。usage 为提供商报告值，不可替代完整上下文测量。
-- 三种新验收 fixture 与产品质量基准。
+- Timeline: valid dates with explicit precision, chronological order and real intervals; simultaneous events remain separate.
+- Process: nodes and labeled directed edges with evidence; evidenced loops are allowed.
+- Hierarchy: one connected rooted tree, without cycles, multiple parents, unknown nodes or duplicate edges.
+- Scatter: complete pairs, independent variable names/units and both values on the same evidence line. extract_structure reads all timeline/scatter records from real source-table columns and returns Markdown, not model-filled arrays.
+- Structural components map exactly one same-type fact; label_field/value_field are structure and unit is empty. Workbench charts include accessible complete records.
 
-## 性能与真实服务边界
+Maps, networks and Sankey diagrams lack full contracts and are unsupported; illustration cannot bypass validation.
 
-首次沙箱内测试：119 项，106 通过、13 失败，22.863 秒；环境不允许部分本地服务与 Chromium。获准沙箱外测试后，133 项全通过，25.205 秒。这两个数字环境与发现测试数不一致，不能作为优化前后对比，且沙箱外运行时观测模块已加入，不能作为干净的修改前基线。
+## Composition and assets
 
-未运行真实模型、搜索与图像服务，不提供端到端性能提升、真实生成成功率或视觉质量结论。必须在相同输入/模型/服务配置/质量门槛下采集真正修改前后的首次预览、最终交付、按需 PDF，统计失败与返修后再评估。程序渲染诊断不证明审美质量。
+composition, asset_ids and each asset commission are required. Designer formally defines background, composition, safe regions, reflow, print, art direction and acceptance. Use CSS/SVG for simple backgrounds; images cannot encode precise data.
 
-## 本轮检查结果
+AssetService keys content by commission, palette, art direction and image configuration. Ready resources and explicit fallback outcomes are reused; cancellation is not disguised as fallback success. Image requests include official dimensions/transparency; unsupported service behavior produces a designed fallback. HTML marks use with data-asset-id. Ready assets must embed their actual version's data URL; substitutes require data-asset-status=fallback. Markers alone do not prove semantic/artistic adequacy, which still requires Designer review.
 
-新增协议与观测、真实 Chromium 桌面/移动/打印测试后完整套件 137/137 通过，25.365 秒；随后角色契约指纹改动复验 workflow、Markdown 和扩展契约。`npm run build` 包含 TypeScript check 并通过。真实浏览器测试检查的是测试 HTML 诊断和既有 fixture 的离线 D3/PDF，不是实际服务生成作品的视觉验收。
+## Quality and repair
+
+Builder submission gates script/console errors, broken images, horizontal overflow and detectable clipped text. One browser session batches desktop, 390px mobile and print, blocking network and waiting for fonts/images. Component overlap and first-viewport text occlusion are diagnostics; data-overlap=allow declares intended layering without proving safety. HTML/width/check-version keys cache reports and screenshots for Designer reuse.
+
+Production scheduling asks the existing Designer model to review screenshots using native Pi image input and Markdown findings. Undeclared image capability yields unsupported, never a fabricated visual pass. Findings name a component and owner. The scheduler selects the earliest affected role, passes precise issues, retains unaffected upstream versions and permits at most two repairs. Counts/issues persist across pause/resume. Builder fixes do not rerun analysis/design; substantive upstream changes invalidate downstream work.
+
+Not guaranteed: all occlusion, complex transparent-background contrast, all print clipping or aesthetic quality for arbitrary HTML. Repairs currently rerun basic checks and three-media screenshots rather than only affected regions. Pages taller than 12000px receive viewport screenshots, limiting visual coverage.
+
+## Performance and delivery
+
+Wall time starts at the first valid user message. Record first official preview, final delivery and on-demand PDF separately. The basic-checked preview can be viewed while Designer review continues. Append-only events retain retries and historical waits. The workbench projects operation totals and waiting for information, interruption and postfailure continuation. Overlapping intervals must not be summed into wall time.
+
+Run/stage deadlines are shared across retries. ExecutionBudget central limits are 120 model turns, 400 tools, 16 asset requests, 10 stage network retries and two repairs. Pi retry is disabled; source readers retain per-request safety limits. Resume creates a new run budget while persisted repair counts remain. Context measurements are serialized characters, not tokenizer tokens; model time is an SDK observation interval, not pure provider inference time.
+
+Stable high-resolution file metadata caches upload digests and detects changes during reading. HTML is self-contained and preview uses CSP isolation. PDF is on demand, cached by work/page/browser configuration and verified by PDF digest. Geometry heuristics cannot prove every possible page usable.
+
+## Verification
+
+Synthetic statistics, illustrated explanation and timeline/process artifacts live only under tests/fixtures. Real Chromium checks desktop/mobile/print, zero network and essential PDF text. These do not verify external image services or real generation quality. No controlled live-model/search/image/visual-review performance comparison has been run. Do not claim real end-to-end improvement or generation success rates. See [VALIDATION.md](VALIDATION.md).

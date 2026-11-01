@@ -1,88 +1,64 @@
-# Markdown 正式交接协议
+# Formal Markdown handoff protocol
 
-版本：markdown-v1；实施日期：2026-10-30。
+Version: infographic-markdown-2026. The Markdown handoff was introduced 2026-10-30 and the current infographic contract adopted during the 2026-11-01 refactor.
 
-## 正式文档与内部数据
+## Authored documents and internal data
 
-五个专业角色仍为 ChatBot、Researcher、Analyst、Designer、Builder。Orchestrator 保持确定性调度。智能体提交 Markdown 文档，程序生成内部索引；不要求模型分别生成并维护 Markdown 与 JSON。Pi 工具调用与 HTTP 传输仍使用其原生 JSON 参数封装，但业务报告是一段 Markdown 文本。
+ChatBot, Researcher, Analyst, Designer and Builder author Markdown. Orchestrator is deterministic. Programs compile internal indexes; models never maintain a second JSON report. Pi tools and HTTP retain native JSON parameter envelopes containing Markdown text.
 
-| 角色 | 正式文档 | 必须保留的信息 |
+| Role | Document | Required information |
 | --- | --- | --- |
-| ChatBot | intent.md | 标题、主题、目标、受众、范围、数据需求、叙事方向、视觉偏好、约束 |
-| Researcher | research.md | 概要、来源与数据集的编号/路径/字段、URL、时间、来源类型及局限 |
-| Analyst | datafacts.md | 每条事实的类型、数值/单位、证据/位置、分析、上下文、来源、重要性、关系、置信度和完整数值序列 |
-| Designer | design.md | 整体编排依据、故事线与选材顺序理由、事实引用、页面、色板/字体、组件/父级/段落编号列表、布局、映射、交互、动画和素材需求 |
-| Builder | delivery.md + output/index.html | Markdown 交付概要与限制；独立 HTML 作品 |
+| ChatBot | intent.md | Title/topic/objective/audience/scope/data needs/content direction/preferences/constraints |
+| Researcher | research.md | Summary, source/dataset IDs/paths/fields, URLs/dates/kinds/limitations |
+| Analyst | datafacts.md | Types/derivation/specification, values/units, evidence/location, analysis/context, sources, importance, relations, confidence and complete series/structure |
+| Designer | design.md | Overall rationale, ordered content/selection reasons, references, whole composition, page/palette/font, components/parents/sections, layout/mappings/interaction/animation/assets |
+| Builder | delivery.md and output/index.html | Summary/limitations and independent HTML |
 
-## 文档写法
+## Template syntax
 
-每个对象用“字段 / 内容”两列表格表达单值字段；嵌套章节用中文名称，英文业务字段名也接受。空字符串可留空或写两个反引号；空列表显式写“无”，编号列表也接受单项“- 无”；“无”不能与真实编号混写，不默默补齐缺失章节。模型每次得到由现有业务定义生成的完整角色模板；章节、字段行及记录表格列可调整顺序。
+Use the supplied localized template or accepted English business field names. Object scalar fields use a two-column field/value table; nested objects/lists use sections. Required sections cannot be silently omitted. Headings, field rows and record columns may be reordered. Empty strings may be blank or two backticks. Empty lists use the runtime template's localized none marker (Unicode U+65E0); reference-ID lists also accept its single bullet-item form. Never mix the none marker with real IDs. Missing nullable values use the template marker U+672A U+63D0 U+4F9B. These protocol literals remain unchanged by repository-document translation.
+
+Complex record lists use the template's numbered item heading; simple scalar records use tables, such as label/value or source_id/quote/location. Preserve empty evidence, relations and series sections. A schematic field table is:
 
 ```markdown
-# 需求报告
-
-| 字段 | 内容 |
+| field | value |
 | --- | --- |
-| 标题 | 人口结构变化 |
-| 主题 | 人口年龄结构 |
-| 项目目标 | 解释年龄结构的变化 |
-| 目标受众 | 公众 |
-| 内容范围 | 用户指定的地区和年份 |
-| 数据要求 | 使用可追溯统计资料 |
-| 叙事方向 | 从总体变化展开到年龄差异 |
-| 视觉偏好 | 清晰、适合打印 |
-
-## 约束
-
-- 不将相关性直接声明为因果
-
-## 说明
-
-明确记录判断依据与需要保留的限制。
+| title | Population structure |
+| objective | Explain the change using traceable statistics |
 ```
 
-独立成行的 `---`、`***`、`___` 可用作章节之间的排版分隔线，解析时忽略，但保留原始文档。表格单元格和列表条目中的同类文字仍是内容；普通正文仍应放在文末“## 说明”。
+This snippet illustrates syntax, not a complete submit-ready document. Obtain the actual role template from documentInstructions/documentTemplate.
 
-复杂记录列表用“条目 1”“条目 2”子章节，各条目内有字段表与必要子章节。简单记录列表使用普通 Markdown 表格，例如数值序列的“标签 / 数值”、证据的“来源编号 / 原文 / 位置”。不得省略空的证据、关系或数值序列章节。
+Escape cell pipes with backslash or supported entities and represent newlines with <br>. Program rendering escapes special characters for lossless evidence/series roundtrips. Numeric cells contain finite numbers without units; units have separate fields. Wrap numeric text such as 001 in backticks to preserve string type. Ordinary free prose belongs under the supplied final notes heading (Unicode U+8BF4 U+660E), which may contain arbitrary Markdown.
 
-表格中的竖线写 `\|`（也支持实体转义），换行写 `<br>`；程序生成文档会转义特殊字符，保证引文和数值序列可往返解析。数值列不带单位，单位放独立字段；需要保持文本类型的数值（如 001）放在反引号中。缺失链接、发布日期或父组件填“未提供”；非缺失空文本留空。文末“## 说明”可包含自由 Markdown 说明、列表和子标题。
+Standalone thematic breaks (---, ***, ___) are ignored structurally but preserved in original text. The same characters in cells/list items remain data. Do not wrap the entire document in a code fence. Parsing is template-based, not arbitrary natural-language extraction; enums, references and chart semantics remain strict.
 
-解析器不是任意自然语言信息抽取器：必须使用模板结构，但不再需要嵌套 JSON、转义整套对象或维护两份内容。不得把整个正式报告包在代码围栏内。来源类型、事实类型和图表映射仍需遵守角色指令与业务校验。
+## Tools, validation and failure budgets
 
-## 提交、校验与错误
+read_handoff({document}) reads only allowed upstream reports or the full accumulated brief.md. Read complete relevant inputs; a manifest/summary is not a substitute. submit_stage({markdown}) parses and checks schema, source/fact/component references and actual quotations before ending the stage for deterministic commit.
 
-- `read_handoff({document})`：只允许读取当前阶段上游目录中的报告名，或完整累积需求 brief.md。先读取完整需求和相关上游文档，再处理资料；目录摘要不能替代原文。
-- `submit_stage({markdown})`：解析文档，校验业务字段、来源/事实/组件引用以及原文证据。成功后结束本阶段并由调度器提交正式版本。
-- Builder 先调用 `save_html({html})` 在当前阶段内存暂存经过校验的 HTML，再提交 Markdown 交付说明。未提交成功时不会改写正式作品；没有任意路径写入或 shell 权限。
-- 正式提交失败与 Analyst 草稿工具参数错误分别计数；草稿预检待修问题正常返回，不占正式提交预算。有效修复重置连续失败窗口；默认同一错误/停滞状态出现 3 次或连续失败/无进展达到 5 次才停止。阶段总时限仍独立生效。Pi 执行前拒绝的参数进入对应工具预算；不能用 ask_question 把技术故障转交为需求问题。
-- 工具开始、失败原因、文档校验通过都会进入现有事件流和执行记录；网络/限流重试仍由原有独立预算控制。
+Builder calls save_html({html}) first, staging validated self-contained HTML in memory, then submits its delivery Markdown. Failed submission does not rewrite the official work. There is no arbitrary path write or shell access.
 
-## 版本与恢复
+Analyst/Designer may use saved draft_revision instead of resending Markdown. Analyst supports read/save/per-fact patch; Designer supports read/save/story/component patch and exact reorder. Updates require current revisions and preserve other original text. Preflight with pending issues is a successful save, not formal failure. Final submission always fully validates.
 
-artifact.json 在内部保存原始 Markdown、协议版本、编译索引和说明，Markdown 原文另存版本目录；文档与索引一起计入产物摘要。正式目录下只物化 Markdown 原文和独立 HTML；JSON 索引保存在内部版本目录，不生成报告 JSON 副本或提供 JSON 文档下载。checkpoint 指向已写完的版本；中断时继续保留最近一次完整阶段。
+Formal failure, invalid draft-tool arguments and repeated stagnation have separate windows. Useful progress resets consecutive counters; default repeated/continuous limits are 3/5, configured through DREAMATIC_MAX_REPEATED_SUBMISSIONS and DREAMATIC_MAX_INVALID_SUBMISSIONS. Pi argument rejection before execution counts too. Stage/run/network budgets remain authoritative. Do not use ask_question to transfer technical errors to users. Starts, failures, checks and retries enter the event stream/log.
 
-所有成果必须包含当前 Markdown 协议标记与正式文档；指纹和恢复只保留一条路径。实际输入、配置或正式文件修改按同一规则触发阶段与下游失效。协议缺失或文档损坏会被拒绝，不提供旧格式转换。
+## Versions and recovery
 
-`PUT /api/projects/:id/artifact/:role` 只接受 `{markdown}`；Builder 仍通过独立工作流提交。API、前端卡片与图表消费程序内部索引。配置只读取 `.env` 当前字段，不迁移旧文件或变量别名。
+Internal artifact.json stores original Markdown, protocol, compiled data and notes. Immutable version directories separately retain Markdown. The artifact digest covers author text and index. Canonical directories materialize Markdown/HTML only, without report JSON copies/downloads. Checkpoints refer only to complete written versions; interrupted work retains the last complete stage.
 
-## 验证边界
+Current protocol/original documents are mandatory. Inputs, configuration or official file changes use one fingerprint/invalidation path. Missing/corrupt/old protocols are rejected, never converted. PUT /api/projects/:id/artifact/:role accepts only {markdown}; Builder uses the workflow. Configuration reads current .env keys without old aliases/migration.
 
-自动化使用临时项目和本地提供商验证完整字段往返、证据与数值、转义、错误停止、当前协议恢复、按需读取和独立 HTML 提交。未调用用户的真实外部模型，不能据此宣称所有模型均能遵守 Markdown 模板，也不能保证生成质量或延迟。
+## Statistical and structural contracts
 
-验收结果见 docs/VALIDATION.md。CSV/Excel 的可读副本使用带原始行号的 Markdown 表格，原始文件保留。
+Ten statistical types keep derivation separate and require specification and source-bound receipts for computed results. See DATA_FACT_TYPES.md. Program calculation records are not a second authored document.
 
-文档提交失败预算可在 Settings → 系统参数高级选项调整，统一保存于 `.env`：`DREAMATIC_MAX_REPEATED_SUBMISSIONS` 和 `DREAMATIC_MAX_INVALID_SUBMISSIONS`，用于后续阶段会话。
+Design requires composition (task, reading, medium, selection_basis, communication, art_direction, layout_rules, safe_regions, responsive_rules, print_rules, acceptance), component asset_ids and complete commissions. Responsive reflow need not use absolute coordinates. Nested assets use item sections; no old optional-extension reader exists.
 
-## Analyst 草稿与局部修正
+timeline/process/hierarchy/scatter require structure; statistical facts omit it. Structure has events, nodes, edges and observations plus x_variable/x_unit/y_variable/y_unit. Unused lists are empty and nonscatter variables blank. Each record directly carries source_id/quote/location, not a nested evidence list. Events have id/date/label, nodes id/label, edges from/to/label, observations id/x/y. Dates use YYYY[-MM[-DD]]. Structural mappings reference one same-type fact and use structure for both fields with an empty unit. See the structured-visualization Skill.
 
-Analyst 可先通过 save_analysis_draft 保存 Markdown，使用 patch_analysis_fact 追加或替换单条 ### 条目 N；已有草稿须使用当前版本，正文仍是唯一作者文档。最终 submit_stage 可提供 draft_revision，服务端读取、完整核验并提交该版本 Markdown，不要求重新发送全文。其他角色继续使用 markdown 字符串提交。编号/关系/引文错误以 Markdown 问题表返回；引用来自只读来源证据块，不是模型生成的概述。详情见 ANALYST_WORKBENCH.md。
+Designer visual review submits a separate Markdown table with ID, owner, component and issue. Owners are researcher/analyst/designer/builder; component is an official ID or the runtime global marker U+6574 U+4F53. No issues uses U+65E0 U+95EE U+9898. The program compiles findings and routes bounded repair. Undeclared vision is unsupported, not passed. These runtime literals remain unchanged.
 
-## 十类事实协议
+## Verification boundary
 
-Data Facts 新增占比/分类/排名/极值/异常，推论不再作为 type；每条事实新增“依据方式”与“统计口径”Markdown 章节。计算记录编号为空写“未提供”；确定性计算使用 calculate 的来源模式并复制其记录、精确结果与口径。模型继续只维护 Markdown，内部计算记录不作为第二份作者业务文档。详见 DATA_FACT_TYPES.md。
-
-Designer 可先用 save_design_draft 分批保存完整模板的 Markdown，未规划的列表写无；patch_design_story 局部修正段落、patch_design_component 局部修正组件，read_design_draft 可按 story_id/component_id 读取单项，reorder_design_stories 调整顺序，最终 submit_stage 可使用 draft_revision。草稿必须明确整体编排依据、每段的选材与顺序理由，以及组件的段落编号列表。详见 [DESIGNER_WORKBENCH.md](DESIGNER_WORKBENCH.md)。
-
-## 整体设计与素材委托扩展
-
-Designer 模板增加整体设计 composition（任务、阅读方式、交付形式、选择依据、内容传播、艺术方向、构图关系、安全区域、媒介适配、打印与验收）。保留坐标布局，同时用正式文字规则表达关系；不把全部页面限制为绝对定位。组件可引用 asset_ids；素材可包含 commission，精确数据编码不得委托图像生成。新增字段对旧文档可省略，但当前模板要求新设计完整填写；旧字段不得省略。新增嵌套素材使用条目章节。详见 INFOGRAPHIC_IMPLEMENTATION.md 的恢复与未实现边界。
+Local deterministic providers and temporary projects verify parsing/escaping, evidence, values, drafts, failure limits, recovery, source reads and independent HTML submission. They do not prove live-model template adherence, artistic quality or latency. See VALIDATION.md.

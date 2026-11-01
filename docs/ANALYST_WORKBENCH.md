@@ -1,88 +1,46 @@
-# Analyst 证据、草稿与局部修正
+# Analyst evidence, drafts and local repair
 
-实施：2026-10-31。
+Implemented 2026-10-31. Initial failures included rewritten quotations absent from sources, distribution used as a relationship type and renamed source IDs. Rewriting long reports exhausted the stage budget. The solution preserves strict evidence while providing authoritative catalogs, aggregated diagnostics, immutable drafts and per-fact repair.
 
-## 问题与修改计划
+## Evidence
 
-本次失败包含三类错误：把表格改写成不在原文中的引文；将事实类型 distribution 填入关联类型；将真实来源编号改为 S-01 等别名。报告较长，整份重写与重复提交最终耗尽 15 分钟预算。
+read_source_catalog returns official Research source IDs, titles, paths, digests and limitations. Copy IDs exactly. read_evidence ranks deterministic blocks by optional keyword and supports pagination/block selection; ranking never changes evidence matching. Keep the E- block ID in evidence.location and copy a contiguous original passage into quote.
 
-修改顺序：
+Display normalization preserves cell order/boundaries, digits, punctuation, years, units and superscripts. Simple HTML tables become readable views; merged cells remain HTML without invented headers. Formatting/entities/whitespace can normalize, but separate passages/cells cannot be stitched into a fabricated quotation. Explicit E- locations must match that source block. CSV/TSV/TXT/MD/JSON uploads also expose original text. Block IDs bind source ID, digest, position and view version; source digests cover all verification text. Originals and formal reports are never rewritten by evidence views.
 
-1. 提供权威来源目录与稳定的证据视图，明确事实类型/关联类型的区别。
-2. 汇总可解析文档的 Schema、编号、关系与证据问题，给出事实编号、字段及修正要求。
-3. 保存 Markdown 草稿，按事实条目局部追加或替换，恢复时返回草稿版本、已通过事实与待修清单。
-4. 验证最终提交、来源变化失效、并发版本保护、有限纠错及原有五阶段流程；不放宽证据要求、不增加阶段时限。
+Traceable quotation does not prove statistical correctness, representative sampling or agreement between a calculation and its description. Analyst retains professional responsibility.
 
-## 证据与来源
+## Diagnostics and tools
 
-`read_source_catalog` 返回正式 Research 来源的真实编号、标题、文件、内容摘要和局限。模型复制编号，不另建别名。
+Unparseable drafts report exact format errors. Parseable drafts aggregate schema, enum, duplicate ID, source, quotation/location and relationship errors into a Markdown location/problem/repair table. Statistical types and derivation are independent; relationship types are temporal/comparison/correlation/causal/contains/context. No source-alias or enum guessing occurs. Structural contracts are described in [DATA_FACT_TYPES.md](DATA_FACT_TYPES.md).
 
-`read_evidence` 使用来源编号、可选关键词与分页参数读取确定性证据块。关键词只帮助排序，不影响是否匹配。每块保留 E-… 编号、章节和原始文件路径；模型把该编号写入 evidence.location，原文写入 quote。
+- read_analysis_draft returns revision/path/verified facts/issues, optionally one fact_id.
+- save_analysis_draft saves a nonempty, bounded Markdown draft even with pending validation issues. Updating an existing draft requires base_revision.
+- patch_analysis_fact takes current revision, fact_id and one complete fact-item section in the supplied template. Existing IDs replace one item, new IDs append; other original items and notes remain. Reject mismatched IDs, stale revisions and extra sections.
+- submit_stage accepts draft_revision to fully validate and submit the saved Markdown without resending it, or accepts markdown directly.
 
-视图只做展示规范化：简单 HTML 表格保留原单元格顺序与竖线边界；合并单元格表保留 HTML，不推断缺失表头。加粗、行内代码、HTML 实体与空白可规范化；数字、标点、年份、单位、上下标和单元格边界不合并。引用必须在同一个原始证据块内连续存在；不会把分散段落或单元格拼成“原文”。带 E-… 定位的引文还须匹配该来源的指定块。
+Save an evidence-complete batch, then append/repair locally. Add relationships when targets exist. A repaired fact can pass while unrelated issues remain; that is not a failed formal submission. Pending preflight issues return successful saved-draft reports.
 
-上传的 CSV/TSV/TXT/MD/JSON 同时保留对应原始上传文本的证据视图，支持引用原始行。新视图不改写已有原始文件和正式研究报告。来源摘要覆盖参与核验的文本，E-… 标识绑定来源编号、内容摘要、块位置及视图版本。
+Formal failures, malformed draft arguments and no-progress states have separate counters using DREAMATIC_MAX_REPEATED_SUBMISSIONS and DREAMATIC_MAX_INVALID_SUBMISSIONS, including Pi argument rejection before tool execution. Session startup establishes a baseline. New verified items, fewer issues or restored parsing count as progress while preserving previous facts/verified items. Revision changes, replacement wrong quotations, deletion or equally bad states do not. Useful repairs may exceed five operations; repeated stagnation stops at configured limits. Final submission always rechecks everything.
 
-这些检查证明引文可追溯，不能自动证明统计结论正确、样本具有代表性，或计算结果与事实描述完全一致；专业分析仍由 Analyst 负责。
+Association units r/rho/tau require [-1,1]; quoted OR/RR/HR are finite nonnegative ratios and may exceed one. Unknown units are rejected. Deterministic calculation supports Pearson, not regression-derived OR/RR/HR. Preserve quoted methods, reference groups and adjusted definitions; none proves causation.
 
-## Markdown 问题清单
+## Storage and invalidation
 
-结构无法解析时先报告具体格式错误。能解析时同时收集 Schema、非法枚举、重复事实编号、所有未知来源、证据位置/引文和关联目标问题，使用 Markdown 表格返回“位置／问题／修正要求”。例如 F-008／第 3 条关联／类型，而不是仅返回内部 JSON 路径。
+state/drafts/analyst/<scope>/ stores evidence-<source-hash>.md and revisions/<UUID>/{draft.md,validation.md,meta.json}; current.json switches only after the whole revision is written. Scope binds Brief, intent, research, actual source digests, schema and view version. Reads/repairs/submission revalidate source content. Changed inputs use a new scope; serialized version checks prevent stale concurrent overwrites. Old verification is never blindly trusted.
 
-事实类型为 value/comparison/trend/distribution/correlation/proportion/categorization/rank/extreme/outlier；依据方式单独标注 quoted/computed/inferred/forecast；关联类型为 temporal/comparison/correlation/causal/contains/context。不会自动把 distribution 映射为某个关联类型，也不会自动把 S-01 映射为来源。
+Drafts are not formal datafacts.md and cannot start Designer. Formal commit remains Orchestrator-owned. Historical unsaved model responses are not imported automatically. Saved drafts recover across pause, failure and restart.
 
-## 草稿工具与恢复
+## Read-only UI and API
 
-- `read_analysis_draft`：读取当前版本、文件位置、已通过事实和问题清单；可指定 fact_id 只读一个事实。
-- `save_analysis_draft`：首次保存 Markdown 草稿；已有版本时须传 base_revision。即使校验失败，非空且未超过文档大小上限的草稿也保留，正式成果保持独立。
-- `patch_analysis_fact`：传当前 revision、fact_id 与一个完整的 `### 条目 N` Markdown 事实章节。已有 ID 替换该条目，新 ID 追加；其他事实原文与报告说明保持不变。编号不匹配、过期版本、额外章节均拒绝。
-- `submit_stage`：Analyst 可传 draft_revision，直接完整核验并提交已保存的 Markdown，不重复发送全文；也可直接提交 markdown。其他角色的 Markdown 提交约定不变。
+analysis_progress and GET /api/projects/:id/analysis/progress project the current scope without model execution or evidence writes. Show saved/verified/pending facts, issue counts, evidence and precise fixes; reuse official cards with an explicit unsubmitted-draft label. Support pending-only and relationship filters, safe invalid-enum labels and invalid-confidence handling.
 
-建议先保存一批有完整证据的事实，再逐条追加；关系的目标事实出现后再补关系。每次修改在本地重新检查当前草稿，模型仅需发送变动条目。修复目标事实通过、其他事实仍待修时，会返回剩余问题，不把这次成功修复算作失败提交。
+Existing 1.8-second detail polling and SSE refresh update saved state. Pause/failure retains drafts; parsing failures retain document/issues; changed requirements/sources hide stale facts; formal completion replaces drafts. Downstream roles still read only official artifacts.
 
-草稿预检问题由工作台内部校验信号传给 Pi 工具包装层；包装层返回成功保存的 Markdown 修复报告，不作为正式提交失败。正式提交、草稿工具参数错误、草稿连续无进展分别计数，沿用 `.env` 的 DREAMATIC_MAX_REPEATED_SUBMISSIONS / DREAMATIC_MAX_INVALID_SUBMISSIONS 上限。参数在 Pi 执行前被拒绝也进入对应工具预算。
+/analysis/draft?revision=<UUID> and /analysis/validation?revision=<UUID> serve only current-scope/current-revision plain Markdown. Reject stale/unknown revisions and arbitrary paths/formats. Downloads state that drafts are not submitted.
 
-会话开始读取当前草稿作为基线，每次草稿保存/局部修改及失败正式提交后重新核验。结构变得可解析、在保留已有事实和已通过条目的前提下新增通过事实或减少问题，视为进展并重置连续失败窗口；允许超过五次有效修复。单纯更换版本号、错误引文、删除事实、丢失已通过条目或在等量问题之间来回切换不算进展。无进展时返回重新定位证据、核对指标、先处理其他待办的建议；重复同一停滞状态或持续停滞达到配置上限才停止。预检通过不表示阶段完成，最终提交仍完整核验。
+## Verification history
 
-correlation 表达关联而非仅 Pearson 系数。明确单位为 r/ρ/τ 的相关系数仍要求 [-1, 1]；文献引用的 OR/RR/HR（含明确调整后的比值别名）允许大于 1，要求非负有限数值。未知指标单位必须补明，不能靠放宽范围或改小数值过关。确定性计算仍只支持 Pearson；OR/RR/HR 引用须保留原文证据和方法。
+The initial implementation passed 84 tests, covering verbatim evidence, changed numbers/years/units, cross-block rejection, combined diagnostics, invalid-draft persistence, local append/repair, revision protection, source/intent invalidation, progress budgets and native Pi against a local deterministic provider. API/UI tests later covered read-only polling, paused drafts, malformed documents and formal switching.
 
-## 存储与失效
-
-项目内保存到 `state/drafts/analyst/<scope>/`：
-
-- `evidence-<source-id-hash>.md`：完整只读证据视图。
-- `revisions/<UUID>/draft.md`：该版本作者提交的 Markdown。
-- `revisions/<UUID>/validation.md`：该版本的校验清单。
-- `revisions/<UUID>/meta.json`：程序内部的摘要与已验证事实索引。
-- `current.json`：完整版本写好后才原子切换的当前指针。
-
-scope 绑定 Brief、intent、Research、来源实际内容摘要、事实 Schema 和视图版本。恢复时重新核验 Markdown 与来源；来源在会话中变化会拒绝继续使用旧范围，新需求/资料对应独立草稿。不会信任旧验证结果而跳过最终检查。并发修改串行执行，版本检查防止旧回复覆盖新草稿。
-
-草稿不是正式 datafacts.md，也不会提前启动 Designer。正式提交仍走原有 Orchestrator 校验和原子提交。此前未通过新工具保存的历史模型回复不自动导入为草稿；后续保存的草稿可跨暂停、失败和服务重启恢复。
-
-## 验证
-
-全量 84 项测试通过，新增 6 项覆盖：
-
-- 展示规范化后的逐字证据，数字/年份/单位篡改、跨段拼接、错误块编号被拒绝，合并单元格与换行不误合并数字。
-- 多种枚举、来源别名与引文错误同时反馈。
-- 错误草稿落盘、单事实修复、其他条目不变、新事实追加、恢复与按版本提交。
-- 来源内容和 intent 变化使草稿失效，过期/并发修改不覆盖新版本。
-- 正式提交的稳定问题标识不随草稿版本变化；有效修复可重置连续失败窗口，重复无进展仍受限。
-- 真实 Pi Session 使用本地确定性模型服务，实际调用来源/证据/草稿工具，修正错误并仅用版本号提交，再从新会话恢复。
-
-没有调用外部付费模型验证其新工具遵循能力，也没有主动重跑用户项目。阶段总时限不变；重复错误和连续无进展上限从 .env 读取。
-
-## 数据事实 Tab 中间成果
-
-2026-10-31：前端已接通已保存的事实草稿。项目详情的 `analysis_progress` 与 `/api/projects/:id/analysis/progress` 只读返回当前范围的草稿版本、保存时间、概要、事实、逐条问题及计数，不启动模型或写入证据文件。
-
-界面展示“已保存事实／校验通过／待修正事实／校验问题”，草稿卡片沿用正式事实卡片的数值、图表、分析与依据样式，明确标记“草稿，尚未正式提交”。支持仅看待修正及关联筛选；校验问题给出位置与修正要求。未通过枚举校验的类型使用占位标签，异常可信度不当成有效百分比展示。
-
-沿用项目详情每 1.8 秒轮询和现有 SSE 刷新。首次尚未保存时显示等待；暂停或失败保留草稿；文档不能解析时显示整体问题并允许查看 Markdown；需求/来源变化时隐藏旧事实，标明失效；内容无法核验时不展示旧通过结果。完成正式提交后隐藏草稿面板，展示正式 datafacts，不把草稿传入 Designer。
-
-`/analysis/draft?revision=<UUID>` 与 `/analysis/validation?revision=<UUID>` 仅提供当前范围、当前版本的纯文本。草稿下载加注“尚未正式提交”；失效/过期版本拒绝，未提供版本和未知格式不返回文件。没有任意文件路径参数。
-
-新增 API 和界面测试覆盖只读轮询、局部修正后更新、暂停保留、结构错误、来源失效及正式提交切换。手动界面验收使用 `tsx tests/fixtures/analysis-preview.mts`（先 build）：独立临时项目和本机服务，验证筛选、修正后的自动更新以及宽屏/窄屏布局；结束后删除临时项目，不向产品导入示例。
-
-十类事实、必填统计口径、来源计算记录与单位映射见 [DATA_FACT_TYPES.md](DATA_FACT_TYPES.md)。旧的 inference 类型不做自动映射，当前协议要求重新明确事实类型和依据方式。
+The isolated tests/fixtures/analysis-preview.mts browser script checks filters, automatic updates and wide/narrow layouts after build; it deletes only its temporary project. No external paid model or user project was rerun. See [VALIDATION.md](VALIDATION.md) for current totals and real-provider limitations.

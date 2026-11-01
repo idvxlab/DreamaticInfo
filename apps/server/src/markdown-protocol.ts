@@ -1,10 +1,10 @@
 /** Markdown is the authored artifact; objects below are deterministic internal indexes. */
 import type { Role } from "../../../packages/shared/types.js";
 import { schemas, names, validate } from "./validation.js";
-export const DOCUMENT_PROTOCOL = "markdown-v1";
+export const DOCUMENT_PROTOCOL = "infographic-markdown-2026";
 type Schema = { required?: string[]; type: string | string[]; minimum?: number; maximum?: number; properties?: Record<string, Schema>; items?: Schema; enum?: string[] };
 const labels: Record<string, string> = {
-  composition: "整体设计", task: "内容任务", reading: "阅读方式", medium: "交付形式", selection_basis: "选型依据", communication: "内容与传播", art_direction: "艺术方向", layout_rules: "构图关系", safe_regions: "安全区域", responsive_rules: "媒介适配", print_rules: "打印方案", acceptance: "验收要求", commission: "素材委托", semantics: "语义类别", content_ids: "关联内容编号", placement: "主体位置", transparent: "透明要求", crop: "定位裁切", layering: "层叠规则", factual_boundary: "事实边界", fallback: "失败替代", asset_ids: "素材编号列表",
+  structure: "结构数据", events: "事件", date: "日期", nodes: "节点", edges: "结构连线", from: "起点", to: "终点", observations: "配对观测", x_variable: "横轴变量", x_unit: "横轴单位", y_variable: "纵轴变量", y_unit: "纵轴单位", composition: "整体设计", task: "内容任务", reading: "阅读方式", medium: "交付形式", selection_basis: "选型依据", communication: "内容与传播", art_direction: "艺术方向", layout_rules: "构图关系", safe_regions: "安全区域", responsive_rules: "媒介适配", print_rules: "打印方案", acceptance: "验收要求", commission: "素材委托", semantics: "语义类别", content_ids: "关联内容编号", placement: "主体位置", transparent: "透明要求", crop: "定位裁切", layering: "层叠规则", factual_boundary: "事实边界", fallback: "失败替代", asset_ids: "素材编号列表",
   narrative_rationale: "整体编排依据", rationale: "选材与顺序理由", story_ids: "段落编号列表",
   series_unit: "序列单位", derivation: "依据方式", specification: "统计口径", measure: "度量字段", breakdown: "分组字段", focus: "关注对象", method: "方法", aggregation: "聚合方法", distribution_kind: "分布类别", calculation_id: "计算记录编号",
   intent: "需求报告", research: "调研报告", datafacts: "数据事实报告", design: "逻辑与叙事设计",
@@ -129,7 +129,7 @@ export function parseDocument(role: Role, markdown: string, options: { validateS
   return { data, notes, markdown, protocol: DOCUMENT_PROTOCOL };
 }
 function sample(schema: Schema): any {
-  if (schema.type === "object") return Object.fromEntries(Object.entries(schema.properties!).map(([key, s]) => [key, sample(s)]));
+  if (schema.type === "object") return Object.fromEntries(Object.entries(schema.properties!).filter(([key]) => schema.required?.includes(key) ?? true).map(([key, s]) => [key, sample(s)]));
   if (schema.type === "array") return schema.items!.type === "object" ? [sample(schema.items!)] : ["填写实际内容，空列表写无"];
   const types = Array.isArray(schema.type) ? schema.type : [schema.type];
   if (types.includes("null")) return null;
@@ -150,5 +150,7 @@ export function renderDataTable(rows: unknown[][]) {
   return table(["原始行", ...Array.from({ length: width }, (_, i) => `列 ${i + 1}`)], rows.map((row, i) => [String(i + 1), ...Array.from({ length: width }, (_, j) => cell(row[j] ?? "", { type: "string" }))]));
 }
 export function documentInstructions(role: Role) {
-  return `使用 Markdown 文档作为正式交接，调用 submit_stage 的 markdown 字符串参数提交，不提交 JSON 业务对象。章节和字段使用下列模板的中文名（或对应英文名），可调整表格行与章节顺序，不得省略字段。重复条目复制章节并连续编号；数值序列和证据等简单记录使用表格；没有内容的列表写“无”。表格内容中的竖线写 \\|，换行写 <br>；空字符串留空，缺失链接/日期/父组件写“未提供”；数值不带单位，数值文本要保留类型时加反引号。不要用代码围栏包裹文档。${role === "builder" ? "先调用 save_html 保存独立 HTML，再提交本交付说明。" : ""}\n\n${documentTemplate(role)}${role === "analyst" ? "\nAnalyst 可先保存 Markdown 草稿，预检问题是待修反馈，不是正式提交失败；按事实条目局部修正，最后以 draft_revision 提交已保存的同一份 Markdown，无需重复发送全文。correlation 表达关联：相关系数单位 r、ρ、τ 的值在 -1 至 1；来源报告的 OR、RR、HR 为非负比值，可以大于 1，保留原单位、方法、参照组及调整口径，不能把比值改为相关系数。calculate 目前仅支持 Pearson r 的确定性计算，不计算 OR/RR/HR；引用文献结果使用 quoted，仍须逐字证据。" : ""}\n枚举和数值约定：\n${constraints(schemaFor(role)).join("\n")}`;
+  return `使用 Markdown 文档作为正式交接，调用 submit_stage 的 markdown 字符串参数提交，不提交 JSON 业务对象。章节和字段使用下列模板的中文名（或对应英文名），可调整表格行与章节顺序，不得省略字段。重复条目复制章节并连续编号；数值序列和证据等简单记录使用表格；没有内容的列表写“无”。表格内容中的竖线写 \\|，换行写 <br>；空字符串留空，缺失链接/日期/父组件写“未提供”；数值不带单位，数值文本要保留类型时加反引号。不要用代码围栏包裹文档。${role === "analyst" ? `结构类型 timeline/process/hierarchy/scatter 必须增加结构数据章节，统计事实不添加。结构数据模板：\n${renderNode(sample((schemas.datafacts as any).properties.facts.items.properties.structure), (schemas.datafacts as any).properties.facts.items.properties.structure, 5)}` : ""}${role === "builder" ? "先调用 save_html 保存独立 HTML，再提交本交付说明。" : ""}\n\n${documentTemplate(role)}${role === "analyst" ? "\nAnalyst 可先保存 Markdown 草稿，预检问题是待修反馈，不是正式提交失败；按事实条目局部修正，最后以 draft_revision 提交已保存的同一份 Markdown，无需重复发送全文。correlation 表达关联：相关系数单位 r、ρ、τ 的值在 -1 至 1；来源报告的 OR、RR、HR 为非负比值，可以大于 1，保留原单位、方法、参照组及调整口径，不能把比值改为相关系数。calculate 目前仅支持 Pearson r 的确定性计算，不计算 OR/RR/HR；引用文献结果使用 quoted，仍须逐字证据。" : ""}\n枚举和数值约定：\n${constraints(schemaFor(role)).join("\n")}`;
 }
+
+export function renderStructure(data: unknown) { return `#### 结构数据\n\n${renderNode(data, (schemas.datafacts as any).properties.facts.items.properties.structure, 5)}`; }

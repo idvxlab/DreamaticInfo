@@ -4,7 +4,7 @@ import { previewCsp } from './export.js';
 
 /** One isolated browser, three media checks. Geometry findings are diagnostics,
  * never proof of aesthetic quality or reasons to reject intentional layering. */
-export async function checkRender(html: string, width: number, signal?: AbortSignal) {
+export async function checkRender(html: string, width: number, signal?: AbortSignal, capture = false) {
   signal?.throwIfAborted();
   const browser = await chromium.launch({ headless: true, timeout: 30_000, ...await browserOptions() });
   const abort = () => { void browser.close(); };
@@ -17,8 +17,10 @@ export async function checkRender(html: string, width: number, signal?: AbortSig
     const page = await context.newPage();
     page.setDefaultTimeout(15_000);
     const errors: string[] = [];
+    page.on("console", message => { if (message.type() === "error") errors.push(message.text().slice(0, 500)); });
     page.on('pageerror', error => errors.push(error.message.slice(0, 500)));
     const reports = [];
+    const screenshots: { media: string; data: string }[] = [];
     for (const media of ['desktop', 'mobile', 'print'] as const) {
       signal?.throwIfAborted();
       await page.setViewportSize({ width: media === 'mobile' ? 390 : width, height: 900 });
@@ -31,11 +33,24 @@ export async function checkRender(html: string, width: number, signal?: AbortSig
           horizontal_overflow: document.documentElement.scrollWidth > innerWidth + 1,
           broken_images: Array.from(document.images).filter(image => !image.complete || image.naturalWidth === 0).length,
           clipped_text: visible.filter(el => el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).overflowX === 'hidden').map(el => el.dataset.componentId || el.tagName).slice(0, 50),
+          overlapping_components: (() => {
+            const components = visible.filter(el => el.hasAttribute('data-component-id'));
+            const pairs: string[] = [];
+            for (let i = 0; i < components.length; i++) for (let j = i + 1; j < components.length; j++) {
+              const a = components[i], b = components[j];
+              if (a.contains(b) || b.contains(a) || a.dataset.overlap === 'allow' || b.dataset.overlap === 'allow') continue;
+              const x = a.getBoundingClientRect(), y = b.getBoundingClientRect();
+              if (Math.min(x.right,y.right) - Math.max(x.left,y.left) > 2 && Math.min(x.bottom,y.bottom) - Math.max(x.top,y.top) > 2) pairs.push(`${a.dataset.componentId}/${b.dataset.componentId}`);
+            }
+            return pairs.slice(0,50);
+          })(),
+          occluded_text: visible.filter(el => { if (!['P','H1','H2','H3'].includes(el.tagName)) return false; const r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight) return false; const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return hit && !el.contains(hit) && !hit.contains(el); }).map(el => el.dataset.componentId || el.tagName).slice(0,50),
           outside_viewport: visible.filter(el => { const box = el.getBoundingClientRect(); return box.left < -1 || box.right > innerWidth + 1; }).map(el => el.dataset.componentId || el.tagName).slice(0, 50),
         };
       }) });
+      if (capture) screenshots.push({ media, data: (await page.screenshot({ fullPage: await page.evaluate(() => document.documentElement.scrollHeight <= 12000), type: "png", timeout: 15_000 })).toString("base64") });
     }
-    return { errors, reports, limitations: ['几何诊断需人工判别；未检查审美、全部遮挡和对比度。打印媒体检查不等于 PDF 内容一致性验证。'] };
+    return { screenshots, errors, reports, limitations: ['几何诊断需人工判别；未检查审美、全部遮挡和对比度。打印媒体检查不等于 PDF 内容一致性验证。'] };
   } finally {
     clearTimeout(deadline);
     signal?.removeEventListener('abort', abort);

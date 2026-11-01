@@ -1,5 +1,5 @@
 ---
 name: monet
-description: Impressionist light, atmospheric color, soft edges and layered natural composition.
+description: Atmospheric light, restrained color relationships and soft landscape-inspired composition.
 ---
-以柔和自然色、光感和分层色块营造气氛，水面般的横向节奏组织内容。插画使用细碎色点和光影变化；数据主体保留清晰轮廓与足够对比。背景柔化，关键数字和标签锐利。不能用模糊和渐变替代真实的定量编码。
+Use shifting light, related color fields and gentle atmosphere for backgrounds and illustrations. Keep data regions calm, labels sharp and contrast sufficient. Color harmony may support grouping but must not replace accurate positional or numerical encoding. Avoid reducing the work to a filter on a standard chart.

@@ -1,61 +1,82 @@
-# 系统架构与协议
+# Architecture and protocols
 
-React → Express → Orchestrator → ChatBot → Researcher → Analyst → Designer → Builder。
-Orchestrator 仅选择阶段、校验依赖、执行、提交、持久化与恢复；专业内容由独立 Pi 会话完成。
+React → Express → Orchestrator → ChatBot → Researcher → Analyst → Designer → Builder.
 
-每个项目在 workspace/projects/<UUID>，原始文件 input/、标准化资料 research/、素材 assets/、交付 output/、历史 state/versions/、Pi 会话 state/sessions/。正式产物由完成阶段的工具提交，模型没有任意文件写入或 shell 权限。读取工具只能访问本项目或只读的已发现 Skill。以模型提交的 Markdown 为正式交接文档；程序按统一章节、字段表、列表及数值表解析内部索引，保留原始文档与说明。JSON 仅用于程序内部索引、状态，模型不维护两套产物。Builder 通过受控 save_html 暂存 HTML，再与 Markdown 交付报告一起提交。
+Orchestrator selects stages, checks dependencies, executes, commits, persists and recovers. Professional content belongs to independent Pi sessions. There are exactly five professional model configurations; Orchestrator has none.
 
-Schema 位于 schemas/；共享类型位于 packages/shared/。事实的 evidence/source_ids/relations 和设计的 fact_ids/mapping 都要做引用完整性检查。禁止将相关性直接声明为因果；因果关系需要明确依据。
+## Workspace and authored artifacts
 
-每阶段输入指纹包含 Brief、原始文件摘要、上游正式产物和角色配置；加入 Markdown 协议版本，产物摘要覆盖文档与内部索引。所有阶段使用同一 Markdown 指纹与恢复规则。恢复时验证已完成阶段文件和指纹，首次失效阶段及后续阶段重新执行。阶段提交先写不可变版本，最后原子切换 checkpoint；task-state.json 是恢复视图。正在运行时单项目排他；可跨项目执行。暂停通过 AbortSignal 中止 Pi，并保留上次完整阶段。重启将 running 标记 interrupted。自动重试仅限网络/限流临时错误，默认最多三次，可由 `.env` 调整。
+Each project lives in `workspace/projects/<UUID>`: `input/` holds originals, `research/` normalized/source material, `assets/` images, `output/` delivery, `state/versions/` immutable history and `state/sessions/` Pi sessions. Models use controlled tools rather than arbitrary writes or shell access. Read access is limited to the current project and discovered read-only Skills.
 
-运行配置全部保存于项目 `.env`。配置元数据、范围校验、密钥脱敏与串行原子写入由 config-store 管理。设置页复用 Art 的四模块表单；端口与工作目录重启生效，其他设置保存后用于后续任务。Pi ModelRuntime 使用内存凭据与项目提供商注册，不依赖全局认证或 models.json。每角色有独立 provider/model/baseURL/key/thinkingLevel；连接设置摘要参与阶段失效判断。Designer 原生加载 technical / artistic 与按角色配置的额外 Skill，read 工具只允许已发现知识文件。图像服务通过 Pi 公开 ProviderImages 接口复用 Art 的 OpenAI-compatible 请求协议。
+Markdown is the sole authored handoff. The program parses headings, field/value tables, lists and record tables into internal indexes, retaining original text and notes. JSON is internal state/index data, not a second model-maintained report. Builder stages HTML with save_html and commits it with its Markdown report.
 
-Researcher 工具导入 CSV/Excel/PDF/Word，或搜索及抓取公开 HTTPS 数据；来源保留 URL、采集日期、发布日期（未知为空），原始响应保留 research/。网络请求过滤私有地址及重定向。文件名称由服务端生成，不使用用户路径。
+Schemas live in `schemas/`, shared types in `packages/shared/`. Fact evidence/source_ids/relations and design fact_ids/mapping require reference validation. Correlation cannot be presented as causation; causal relationships need explicit evidence.
 
-Builder 提交独立 HTML，禁用外部脚本和远程资源，使用内联 SVG/CSS/JS，素材可由图片工具生成后内嵌。作品预览在 sandbox iframe 中；PDF 使用 Chromium print，相同 HTML、等待字体与图像完成，禁用动画，适配设计页面。PDF 导出错误保留 HTML，不假装成功。
+## Persistence and execution
 
-API 仅本机同源使用，检查 Origin 和 Host，限制上传大小与类型，不提供远程多用户鉴权。若要公开部署，需先加入用户认证、授权、配额与租户隔离。
+Stage fingerprints cover the Brief, original-file digests, upstream official artifacts, role configuration, role contract and Markdown protocol version. Artifact digests include Markdown and compiled indexes. Recovery verifies files/fingerprints and invalidates the first affected stage and its downstream dependencies. Commit writes the immutable version before atomically changing the checkpoint; canonical files are repairable views and task-state.json is a recovery projection.
 
-## 项目生命周期
+One active run is allowed per project; projects may run concurrently. AbortSignal cancels Pi on pause while retaining complete committed stages. Restart changes leftover running states to interrupted. Automatic retries cover transient network/rate-limit errors only; default attempts are three and configurable in `.env`.
 
-创建项目接口支持空 Brief，立即建立磁盘草稿并返回详情；只有发送有效需求后才启动 Pi。`DREAMATIC_WORKSPACE` 是项目目录集合的根目录，默认 `workspace/projects`。显示名称独立存放 `project-display.json`，读取项目时覆盖 AI 标题；与任务 checkpoint 分离，允许运行中改名且不改变输入指纹。项目写接口由现有项目锁串行处理；运行中删除被调度器和存储层拒绝。删除使用同文件系统目录 rename 移到根目录 `.trash`，不清除内容；UUID 列表扫描自动忽略回收目录。前端移除删除项并停止对应轮询/事件订阅，避免重复创建与旧请求回填。
+ExecutionBudget provides shared run/stage deadlines. All stage retries share one deadline; the default run limit is 45 minutes. Central count limits bound model turns, tools, assets, network retries and repairs. Pi's internal retry is disabled. Continuing after a pause starts a new run budget while history and persisted repair counts remain.
 
-## Markdown 交接协议
+## Configuration and Pi
 
-见 docs/MARKDOWN_PROTOCOL.md。submit_stage 接受 markdown 字符串；Analyst 与 Designer 也可使用已保存的 draft_revision。内容必须遵守当前角色的中文文档模板。模板来自现有业务 Schema，但模型提示不再注入 JSON Schema 或完整上游 JSON。read_handoff 按允许的文件名读取完整文档与 brief.md。原始上传文件、证据引文及来源追溯继续保留。
+All runtime configuration is in project `.env`. config-store owns metadata, range checks, secret redaction and serialized atomic saves. Settings reuses Art's four-module forms. Ports/workspace require restart; other saved values affect subsequent tasks.
 
-提交依次解析 Markdown、校验业务结构、引用和真实证据。正式提交、Analyst 草稿工具参数错误、草稿连续无进展分别计数，默认相同错误/停滞状态达到 3 次或连续失败/无进展达到 5 次停止。草稿预检待修问题正常返回，不能占用正式提交预算；实际问题减少、通过事实增加或结构恢复可解析时重置窗口。删除事实、回退已通过条目或更换错误引文不算进展；阶段总时限和网络重试预算仍独立生效。Pi 执行前拒绝的参数进入对应工具预算。技术提交错误不能转为用户需求提问。界面展示工具失败原因及文档校验结果。
+Pi ModelRuntime uses in-memory credentials and project provider registrations, not global auth or models.json. Every role independently selects provider/model/baseURL/key/thinkingLevel. Connection digests participate in invalidation. Native resource loading discovers technical/artistic and configured role Skills; read only opens approved discovered knowledge files. Image transport uses Pi's public ProviderImages contract and Art's OpenAI-compatible request fields.
 
-文档提交失败预算可在 Settings → 系统参数高级选项调整，统一保存于 `.env`：`DREAMATIC_MAX_REPEATED_SUBMISSIONS` 和 `DREAMATIC_MAX_INVALID_SUBMISSIONS`，用于后续阶段会话。
+## Project lifecycle
 
-正式文档只提供 Markdown 下载。JSON 索引仅保存在内部 artifact.json 中，不再生成项目根目录的报告 JSON 副本。编辑接口仅接受 `{markdown}`；阶段提交必须带原始 Markdown，缺失协议或原文的产物直接拒绝，不提供转换回退。配置只读取当前 `.env` 键，不迁移旧 JSON 或环境变量别名。
+An empty Brief creates a persisted draft immediately; only valid user input starts Pi. DREAMATIC_WORKSPACE defaults to workspace/projects. Display names are stored separately in project-display.json and override generated titles on read; renaming while running does not change fingerprints.
 
-## 调研中间成果
+Project writes are serialized by the project lock. Store and scheduler reject deletion during execution. Deletion renames the directory into the same root's .trash without removing its contents. UUID scanning ignores the recycle directory. The frontend removes deleted entries and stops related polling/subscriptions, preventing stale responses from repopulating them.
 
-ResearchWorkbench 管理模型保存的 Markdown 计划、关键词队列、候选和采集记录。调研范围按需求/上传资料/intent/正文门槛计算，状态在 research/runs/<scope>/progress.json 串行原子保存，计划原文版本为 plan-N.md。网络工具先检查计划，再按 task_id 执行；缓存成功结果跨会话复用，失败显式重试并受独立请求预算约束。正文检查拒绝验证/登录/订阅限制、空页、过短内容和错误数据响应；被拒绝内容保留诊断，不能作为正式来源。证据校验只接受当前范围已登记且内容摘要一致的可用正文。项目详情提供 research_progress，来源页在正式报告前展示计划、候选、正文和失败原因。详见 RESEARCH_WORKBENCH.md。
+## Markdown submission
 
-## 网页阅读器
+See [MARKDOWN_PROTOCOL.md](MARKDOWN_PROTOCOL.md). submit_stage accepts a Markdown string; Analyst/Designer may submit a saved draft_revision. Templates come from business schemas, but full JSON Schemas/upstream JSON are not injected. read_handoff reads allowed complete reports and brief.md. Originals, quotations and source IDs remain traceable.
 
-公开 HTTP 传输拆为 public-http.ts，使用 tough-cookie 在单次读取内保持正常会话并逐跳检查/固定公共 IP；识别无进展循环。document-reader.ts 使用禁用脚本/远程资源的 JSDOM、Mozilla Readability 和 Turndown GFM 生成保留结构的 Markdown。web-reader.ts 提供普通网页 auto/http/browser 模式，按需使用原生 Chromium 网络栈；browser-egress.ts 使用验证并固定公共 IP 的 CONNECT 隧道，覆盖实际重定向和子资源。scholarly-reader.ts 对 PMC/PubMed 使用官方 BioC 全文/摘要接口，核对文章编号并保留资料范围与局限。并发、请求数、字节和总时限可在设置中调整，阅读器/跳转链/诊断与原始、渲染存档可追溯。详见 WEB_READER.md。
+Parsing, business validation, references and real evidence are checked in order. Formal errors, malformed draft tools and stagnation are counted separately; default limits are three repeated states or five consecutive failures/no-progress events. Ordinary pending draft issues return successfully. Fewer issues, additional verified facts or repaired parse structure reset the window; deleting facts, losing verified items or exchanging equally wrong quotations does not. Stage/network budgets still apply, including Pi argument rejection before tool execution. Technical errors cannot be turned into user requirement questions. The UI exposes failures and validation results.
 
-阶段卡片的“第 N 次启动”为累计执行启动次数，包含恢复、重新执行和自动重试，不代表来源请求次数；具体采集次数在调研工作台单独显示。手动暂停标记“用户暂停任务”，服务 SIGINT/SIGTERM 标记服务停止中断；后续启动清除旧阶段错误，已有成果继续保留。临时网络/限流的自动重试在执行事件中明确标示。
+Formal downloads are Markdown only. Internal artifact.json retains protocol, original Markdown, index and notes; there are no root-level report JSON copies. Edit APIs accept only {markdown}. Missing protocol/original documents are rejected without conversion. Configuration reads only current keys, without old JSON/env aliases.
 
-## Analyst 草稿与证据工作台
+## Research and reading
 
-AnalystWorkbench 基于当前需求、intent、Research 与实际来源内容摘要隔离草稿；evidence-view 生成有来源/摘要/片段定位的只读视图。Analyst 按真实来源编号引用同一证据块，Schema、来源与引文问题以 Markdown 清单汇总。save_analysis_draft / patch_analysis_fact 保存不可变 Markdown 版本，完成整版写入后切换指针；read_analysis_draft 在新会话恢复已保存条目。Analyst 可用 draft_revision 最终提交同一 Markdown，正式 Orchestrator 提交及五角色分工保持原约定。预检不提前产生正式成果，待修问题正常返回；草稿参数错误、草稿无进展与正式提交分别计数，有效进展重置窗口。详见 ANALYST_WORKBENCH.md。
+ResearchWorkbench persists a model-authored Markdown plan, keyword queue, candidates and collection records. Scope binds requirements/uploads/intent/body thresholds. progress.json is atomically serialized under research/runs/<scope>; plan-N.md preserves versions. Tools require the plan and task_id. Successful requests survive sessions; failures need explicit bounded retry. Challenge/login/subscription pages, empty/short bodies and invalid data responses remain diagnostic rather than evidence. Only registered bodies matching their digests are accepted. research_progress feeds source-page previews before formal research.
 
-项目详情以只读 analysis_progress 投影当前范围的事实草稿和校验状态，数据事实 Tab 在正式提交前展示草稿卡片、统计和问题清单，沿用现有轮询/SSE。下载接口按当前版本提供纯文本 Markdown。读取使用 readOnly 模式，不重写证据文件；范围变化隐藏旧事实，正式提交后只展示正式成果，下游仍只读取正式产物。
+public-http.ts uses tough-cookie and validates/pins public IPs at every hop, detecting no-progress loops. document-reader.ts runs JSDOM without scripts/remote resources, Mozilla Readability and Turndown GFM. web-reader.ts handles auto/http/browser; browser-egress.ts provides a public-IP-pinned CONNECT tunnel covering redirects/subresources. scholarly-reader.ts uses official PMC/PubMed BioC interfaces, verifies identifiers and preserves abstract/full-text scope and limitations. Limits cover concurrency, requests, bytes and total time. Raw/rendered archives and diagnostics remain traceable. See [WEB_READER.md](WEB_READER.md).
 
-## 事实类型与计算凭据
+A stage's startup count includes resume, manual rerun and automatic retry, not source-request counts. Manual pause and service shutdown have distinct UI reasons; starting again clears stale stage errors without deleting valid results. Transient retries are visible in the event stream.
 
-数据事实采用十类基础类型及独立 derivation，必填 specification 统计口径。source-calculation 从当前来源证据块解析实际表格，fact-statistics 提供确定性运算；计算凭据保存在项目 state/calculations，提交时基于当前来源重新计算并核对结果、序列与单位。独立复算不接受模型自填输入数据，辅助 values 计算不作为正式凭据。Designer 对核心 value 与 series 分别校验单位。当前 Schema 自动使旧 Analyst/下游在续跑检查时失效，不迁移猜测旧事实。详见 DATA_FACT_TYPES.md。
+## Analyst and Designer workbenches
 
-## 叙事设计中间成果
+AnalystWorkbench scopes drafts by current requirements, intent, research and actual source digests. evidence-view creates stable source/digest/block views. Analyst quotes one real block with original IDs. Schema/source/quotation issues are aggregated into Markdown. save_analysis_draft/patch_analysis_fact create immutable versions before switching the pointer; read_analysis_draft restores them and draft_revision submits the same Markdown with full final validation.
 
-DesignerWorkbench 按需求、正式事实、Research、设计 Schema 及实际来源摘要隔离 Markdown 草稿。原生读取/保存/段落修正/排序工具返回当前版本与校验清单，设计进展复用草稿无进展保护。项目详情与 design/progress 只读投影接通原有轮询/SSE；逻辑与叙事 Tab 联动展示故事顺序、选材理由、事实与证据、来自 Analyst 的关系和显式 story_ids 组件映射。完成正式提交后才向 Builder 暴露设计，详见 [DESIGNER_WORKBENCH.md](DESIGNER_WORKBENCH.md)。
+analysis_progress is a read-only projection for polling/SSE. It shows saved facts, issues and counts before submission, retains paused drafts, hides stale scopes and switches to official facts after commit. Downloads are current-scope/current-revision Markdown; readOnly mode does not rewrite evidence. Downstream roles read only formal artifacts. See [ANALYST_WORKBENCH.md](ANALYST_WORKBENCH.md).
 
+DesignerWorkbench similarly binds requirements, official facts, research, design schema and actual source digests. Native read/save/story/component/reorder tools expose versions and precise issues. design_progress feeds narrative, evidence, Analyst relationships and explicit story_ids component mappings. Only formal design starts Builder. See [DESIGNER_WORKBENCH.md](DESIGNER_WORKBENCH.md).
 
-## D3 可视化
+## Facts and implementation
 
-工作台事实卡片使用 D3 7.9.0 的比例尺、折线和环形布局计算几何，由 React 渲染 SVG。Designer/Builder 通过原生 read_visualization_guide 获取数据、单位、可访问性与 D3 API 契约。Builder save_html 与正式持久化共用本地官方运行库内嵌逻辑；下载 HTML、隔离预览和 PDF 使用同一自包含产物，不添加 CDN 或网络权限。Builder 指纹包含库版本与摘要；保留五个角色与 Markdown 交接。详见 [D3 接入记录](D3_VISUALIZATION.md)。
+Ten statistical types are separate from derivation and required specification. source-calculation reads real evidence tables; fact-statistics executes deterministic operations and receipts under state/calculations. Submission recomputes from current sources and checks values, series and units. Model-supplied arrays cannot be formal source credentials. Metric and series units are checked separately. No old-analysis migration is provided.
+
+Structural semantics live in packages/shared/structure.ts; structure-source.ts extracts source tables; StructureChart.tsx draws accessible workbench views. Timeline/process/hierarchy/scatter records have direct evidence and dedicated mappings. Maps/networks/Sankey remain unsupported.
+
+D3 7.9.0 computes chart geometry and React renders workbench SVG. Designer/Builder read the controlled visualization guide. save_html and formal commit embed the same official local runtime with its license. Library version/digest enters Builder's fingerprint; HTML/preview/PDF share a self-contained artifact without CDN or network permission.
+
+AssetService replaces inline Pi image execution. Two bounded generation jobs overlap Builder implementation. Cache keys bind commissions, palette, art direction and configuration. Generated/fallback use is checked in HTML. visual-review.ts uses the existing Designer model's declared image capability and Markdown findings; production scheduling routes explicit owners through at most two repairs, persisted in state/repair.json. Unsupported vision is disclosed.
+
+## Delivery, safety and observation
+
+Builder delivers independent inline HTML. External scripts/resources are prohibited; generated images are embedded. Preview runs in a sandbox iframe. delivery-quality.ts gates script/console errors, broken images, horizontal overflow and detectable text clipping across desktop/mobile/print. Content/version-keyed checks and screenshots are cached. Other geometry remains diagnostic, not aesthetic proof.
+
+PDF is on demand, using Chromium on the same HTML with fonts/images ready and animations disabled. Content/page/browser-configuration digests and a PDF digest control reuse. Failures retain HTML. run-metrics.ts provides append-only measurements and read-only workbench summaries; content-digest.ts caches stable file hashes. Wall time starts at the first valid user message, includes historical waits and is distinct from overlapping operation durations.
+
+The API is loopback/same-origin only with Host/Origin checks and upload limits. Public deployment requires authentication, authorization, quotas and tenant isolation. Current implementation and real-service limits are documented in [INFOGRAPHIC_IMPLEMENTATION.md](INFOGRAPHIC_IMPLEMENTATION.md); the plan is [REFACTOR_PLAN.md](REFACTOR_PLAN.md).
+
+Builder local repair uses `patch_html` exact unique replacements against the latest
+staged HTML or existing delivery. Validation and runtime embedding complete before
+replacing the in-memory draft; formal submission still commits HTML and Markdown
+atomically. Builder reads of output/index.html omit only the system-packaged D3
+script, retaining authored scripts. HTML tool argument rejection before execution
+participates in the bounded validation policy. No shell access is provided.

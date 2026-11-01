@@ -421,6 +421,13 @@ export const CONFIG_FIELDS: ConfigField[] = [
     { min: 1024, max: 100000000, advanced: true },
   ),
   field(
+    "DREAMATIC_RUN_TIMEOUT_MINUTES",
+    "单次运行总预算（分钟）",
+    "system", "number", "45", "45",
+    "所有阶段及重试共用的墙钟上限；暂停后继续建立新运行预算，历史等待仍保留。",
+    { min: 1, max: 720, advanced: true },
+  ),
+  field(
     "DREAMATIC_STAGE_TIMEOUT_MINUTES",
     "单阶段超时（分钟）",
     "system",

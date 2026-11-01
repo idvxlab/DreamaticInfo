@@ -1,793 +1,88 @@
-# Dreamatic · Info
-# 项目开发总指令（Project Master Specification）
+# Dreamatic · Info — Project master specification
 
-> 2026-10-30 通讯协议更新：依据用户最新指令，智能体以 Markdown 为正式交接格式，程序生成结构化内部索引。数据真实性、编号、引用校验及版本恢复要求继续保留。系统仅支持当前 Markdown 协议，不保留旧项目转换、旧提交接口或报告 JSON 副本。具体协议见 [MARKDOWN_PROTOCOL.md](MARKDOWN_PROTOCOL.md)。
+## Product purpose
 
-## 一、项目定位与核心目标
+Dreamatic Info turns a natural-language Brief into accurate, coherent and visually expressive information design: collect material, analyze it, extract facts and relationships, select content, design the whole composition and implement a finished artifact. Data Facts are the core information asset; storytelling is one method, not a mandatory structure for explanations or processes.
 
-Dreamatic · Info 是一款基于大语言模型（LLM）的智能信息设计与数据叙事平台。
+Support uploaded CSV, Excel, PDF and Word material and actual public-source research when needed. Preserve originals, source metadata, missing data, conflicts, definitions and uncertainty. Never fabricate sources or data to satisfy a design.
 
-系统根据用户提供的自然语言需求描述（Brief），自动完成数据采集、数据分析、事实提取、逻辑关联、数据叙事、信息图设计及最终作品实现，将原始数据转化为具有洞察力、叙事性和视觉表现力的信息图作品。
+## Required architecture
 
-系统应具备以下核心能力：
+Use public Pi SDK provider/session/tool/Skill contracts. Verify the stable release and public APIs before upgrading; reuse mature dependencies and never copy runtime internals. The adopted version is Pi 1.4.0.
 
-1. **数据采集**：支持读取和处理用户上传的 CSV、Excel、PDF、Word 等格式的数据及文档。当用户未提供数据时，能够根据需求主动搜索互联网，采集相关数据和参考资料。
-2. **数据分析**：从原始数据中提取有价值的数据事实，识别数据规律、趋势、差异及潜在关联，形成有依据的分析结论。
-3. **逻辑关联**：识别不同数据事实之间的逻辑关系，建立事实之间的关联网络，为数据叙事提供基础。
-4. **数据叙事**：从相关联的数据事实中筛选核心内容，构建具有逻辑连贯性、信息价值和传播潜力的故事线。
-5. **信息图设计**：根据数据内容和叙事逻辑，设计整体视觉方案、信息层级、图表形式、数据映射及视觉表达方式。
-6. **作品实现**：综合运用前端代码、图表、SVG、Canvas、动画、交互及 AI 图像生成等技术，实现最终信息图作品。
+Exactly five professional roles have independent provider, model, endpoint, credential and thinking configuration:
 
-最终作品应兼顾数据准确性、逻辑严谨性、艺术表现力和信息传达效率，通过视觉设计、交互和动画增强用户记忆、加深理解并提升传播效果。
+| Role | Responsibility | Formal output |
+| --- | --- | --- |
+| ChatBot | Requirements, reasonable defaults and necessary clarification | intent.md |
+| Researcher | Source collection, datasets, definitions and limitations | research.md |
+| Analyst | Reproducible analysis, statistical facts and qualitative structures | datafacts.md |
+| Designer | Content selection, art direction, composition, mappings, commissions and visual review | design.md |
+| Builder | Assets, code, composition implementation and implementation repairs | delivery.md and self-contained HTML |
 
-系统的核心理念是：
+Orchestrator is deterministic code, not a sixth agent. It owns dependencies, transitions, concurrency, commits, cancellation, budgets, retries, recovery and explicit repair routing. It does not perform professional judgment or creative work. Respect real dependencies; do not start professional work before its inputs exist.
 
-**以 Data Facts 为数据资产，以 Data Storytelling 为叙事方法，以 Information Design 为设计手段，以 AI Agents 和 Skills 为执行能力。**
+Reuse DreamaticWeb / Dreamatic UI tokens, layout conventions and suitable components. Adjacent repositories are references only: never read their credentials or runtime user material. Runtime project data belongs under ignored workspace/. Deterministic fixtures exist only under tests/ and must never be server dependencies or product projects.
 
-## 二、技术架构与项目约束
+## Requirements and research
 
-### 2.1 底层技术框架
+ChatBot identifies communication goal, audience, setting, content scope, medium, dimensions, interaction, brand and asset restrictions. Read the complete Brief and existing answers. Ask only when a missing answer blocks execution; otherwise record justified defaults.
 
-系统必须基于最新稳定版本的 **Pi Harness** 构建。
+Researcher reads uploaded normalized material and uses actual search/fetch tools when needed. Save a research plan, priorities, keyword queue and stopping conditions. Retain source ID, original URL, publication/access dates, file, fields, provenance and limitations. Unknown publication dates remain null. Distinguish primary statistics, background material, research opinion and speculation. Accepted body extraction is not proof of authority or relevance. Record external-asset usage conditions.
 
-开发前应检查 Pi Harness 的最新稳定版本、官方文档及源码，确认其实际支持的 API 和扩展机制。
+## Facts and structures
 
-优先复用 Pi 原生能力，包括：
+Analyst cleans and organizes real material, recording necessary transformations. Preserve unique IDs, descriptions, core values/units, evidence/locations, analysis, context, source_ids, importance, confidence rationale and relationships. Relation basis must be explicit. Correlation is not causation; causal statements require causal evidence. Model confidence is not a statistical confidence interval.
 
-- Agent 运行及上下文管理机制。
-- Skill 加载与执行机制。
-- 模型调用和模型配置机制。
-- 工具注册与调用机制。
-- 会话管理及相关基础设施。
+Statistical type is independent of derivation (quoted/computed/inferred/forecast). Required specification records scope, measure, breakdown, focus, method, aggregation, distribution_kind, series_unit and calculation_id. Computed results must bind a real source-table receipt and survive independent recomputation. Do not substitute model-authored arrays for source evidence. Keep exact core values; display rounding belongs in prose.
 
-避免重复开发 Pi 已经提供的基础能力。在此基础上扩展 Dreamatic · Info 所需的业务逻辑、智能体协作和前端交互功能。
+Support the ten statistical types and complete timeline/process/hierarchy/scatter contracts described in [DATA_FACT_TYPES.md](DATA_FACT_TYPES.md). Events, nodes, edges and paired observations carry direct source evidence. Do not manufacture quantitative values for qualitative material. Maps, networks and Sankey diagrams remain unsupported until their full data and validation contracts exist.
 
-不得凭空假设 Pi Harness 存在某项 API 或功能，所有技术实现应以实际版本和官方接口为准。
+## Information design
 
-### 2.2 前端设计规范
+Keep three independent dimensions: content task, reading mode and medium. Tasks include statistical overview, comparison/ranking, temporal evolution, process/decision, hierarchy, geography, relationships, explanation and guide. Reading may be guided, exploratory or hybrid. Medium may be poster, responsive page, interactive page or scrollytelling. Justify the main classification; combinations are allowed and not every task is supported automatically.
 
-系统必须充分复用并统一以下两个既有项目的前端设计语言：
+Designer first establishes the whole composition, then details components:
 
-- **Dreamatic · Web**：位于 `DreamaticWeb` 目录。
-- **Dreamatic · Art**：位于 `Dreamatic` 目录。
+1. Communication goal, core message, factual selection, sections, hierarchy, reading order and relationships.
+2. Theme imagery, color roles, font hierarchy, line/shape language, illustration style, background, decorative density and focus.
+3. Grid, hero, text/chart/source regions, whitespace, grouping, alignment, proximity, anchoring, avoidance, layering and cropping.
+4. Asset commissions, data mappings, component dependencies, interactions/animation, responsive reflow, print strategy and acceptance.
 
-开发前必须检查两个项目的：
+Use the smallest sufficient fields; do not duplicate reliably derivable information. Posters may use coordinates. Responsive media require explicit reflow rather than universal absolute positioning. Protect text, key values, labels and sources with safe regions and declare intentional overlap. Decoration must respect information hierarchy, contrast and density. Connect emphasis colors to the corresponding values/marks; keep explanations and sources near their content. Mobile may hide optional decoration but must retain essential explanation. Print must express necessary interactions statically.
 
-- 前端框架及项目结构。
-- UI 组件及组件复用机制。
-- 页面布局与交互方式。
-- 色彩、字体、间距及视觉规范。
-- 图标、图片及其他设计资源。
-- 动画效果和视觉表现方式。
+Technical Skills cover selection, encoding, composition, assets, interaction/print, quality and structural types. Artistic Skills are independent and composable. Discover/load through native Pi mechanisms on demand instead of injecting every body into prompts.
 
-尽可能复用现有组件、样式和设计资源，确保 Dreamatic · Info 与两个既有项目保持一致的设计语言。
+## Assets and implementation
 
-禁止在未充分分析现有项目的情况下，直接重新设计一套独立的 UI。
+Every work has a background plan, without requiring generated imagery. Prefer CSS/SVG for flat color, gradients, panels, borders and simple geometry; use a consistent vector icon system. Informational connections bind actual structure. Generate thematic illustrations, complex scenes or special textures only as needed. Render text, values, units, legends, charts and sources in code, not baked into images.
 
-### 2.3 模型配置
+Distinguish decoration, explanatory diagrams and precise data encoding. Factual diagrams need evidence; label non-scale imagery. Style must not imply unsupported proportions or causation. Commissions specify purpose, semantics, related content, dimensions/aspect, style/palette, subject position, text whitespace, transparency, positioning/crop, layering, factual boundaries, acceptance and fallback. Identify/version assets and their uses, reuse valid resources and avoid unused generation. Failed assets use the designed substitute; inability to preserve essential information must be disclosed and cannot be labeled complete delivery.
 
-五个专业智能体均应支持独立配置所使用的大语言模型。
+Builder follows official facts, core content and art direction. Use accurate D3/SVG/CSS/JS and accessible labels, keyboard behavior and reduced-motion support. Self-contained HTML, isolated preview and offline PDF must not require CDNs or remote runtime resources. PDF is on demand, outside the first-delivery critical path.
 
-要求：
+## Handoff, storage and recovery
 
-1. 每个智能体的模型配置相互独立。
-2. 支持通过统一配置机制管理模型提供商、模型名称及必要的调用参数。
-3. 修改模型配置不应影响智能体的核心业务逻辑。
-4. 模型配置应与智能体角色定义、Skill 和工具配置解耦。
-5. 尽可能复用 Pi Harness 已有的模型管理和配置能力。
+Markdown is the sole model-authored handoff; the program parses and validates internal indexes. Use only infographic-markdown-2026, with no migration, dual reader or old fallback. Retain original Markdown with indexes and notes. Models do not maintain a second JSON report. Original sources → evidence → facts/structures → design → assets/components → work remain traceable.
 
-### 2.4 系统架构原则
+Use isolated project directories and immutable artifact/draft versions. Write a complete version before atomically switching the checkpoint, then materialize canonical files. Persist status, role/stage, completed/pending work, attempts, inputs/outputs, timestamps, errors and recovery context. States are pending/running/completed/failed/interrupted. Recovery verifies fingerprints, content, schemas and references, skips unaffected completed work and resumes at the first invalid dependency. Upstream changes invalidate only necessary downstream work. Retries are bounded and must not duplicate delivery.
 
-采用模块化、可扩展的架构，主要由以下部分组成：
+Models cannot overwrite arbitrary upstream files or execute shell commands. Controlled tools provide scoped reads and validated writes. Runtime configuration is project-local .env, never committed secrets or user data.
 
-- 前端交互层。
-- Orchestrator 任务调度层。
-- 五个专业智能体。
-- Skill 能力扩展层。
-- 工具及外部数据接入层。
-- 项目文件与结构化数据存储层。
-- 任务状态管理与断点恢复层。
-- 信息图作品生成与交付层。
+## Quality and performance
 
-各模块应保持清晰的职责边界，避免业务逻辑相互耦合。
+Program checks cover resources, console errors, overflow, bounds, detectable overlap/occlusion, mobile behavior and print diagnostics. Visual review covers hierarchy, reading path, associations, style, background interference, decoration, whitespace, illustration suitability and design fidelity. Program checks do not prove beauty, and visual models do not replace data validation. Check image-input capability and disclose unsupported review.
 
-## 三、整体智能体架构
+Default to one selected design and one visual review; use explicit issue ownership and bounded local repair. Builder owns implementation, Designer owns composition/assets, upstream roles own factual/source problems. Preserve issues, fixes, versions and timings; avoid free-form negotiation loops. Major composition changes may require full review. Current diagnostic limits are documented separately rather than claimed as complete.
 
-系统由五个专业智能体和确定性 Orchestrator 程序模块组成。
+Measure true wall time from valid user input to first viewable preview and final checked delivery, with PDF measured independently. Keep waiting/pauses, model/search/assets/checks/retries/repairs visible. Record stage time, model calls, context scale and tool time before prioritizing optimization. Use bounded independent work, overlap assets with implementation only after official design, and bind caches to content/version/configuration. Share end-to-end deadlines, cancellation and retry/repair counts. Reduce optional exploration/decoration when budgets shrink, never factual, citation or basic-usability checks. Compare real runs using identical inputs, configurations and quality standards.
 
-五个专业智能体按照以下顺序协作：
+## UI and engineering workflow
 
-**ChatBot → Researcher → Analyst → Designer → Builder**
+Provide conversation/clarification/upload, fact cards and relationships, role progress and artifacts, source/design workbenches, isolated preview and HTML/PDF delivery. Reuse established tokens and interaction patterns. Show saved intermediate results rather than inferred model thoughts. Support pause/continue and precise reruns.
 
-Orchestrator 不属于专业智能体，不承担数据调研、分析和设计等工作，只负责统一调度、任务管理和状态控制。
+Before modifying code, inspect instructions, product/architecture/protocol docs, current diffs and relevant implementations; publish a module/protocol-level plan. Preserve unrelated work and integrate related edits. Implement in dependency order: baseline/observation → contracts/roles/Skills → parsing/evidence/recovery → design/assets → rendering/review/repair → workbench/performance → cleanup/docs/acceptance. Revise the plan before important changes in direction.
 
-### 3.1 Orchestrator — 任务调度与项目管理器
+Run check, relevant tests and production build after meaningful changes. Cover roundtrip/reference/recovery, source calculations, structural semantics and rejection, assets/fallbacks, desktop/mobile/print/offline behavior, HTML/PDF consistency, concurrency/cache invalidation/cancellation/timeouts/budgets. Keep at least statistical, illustrated explanatory and timeline/process fixtures under tests/. Never clear runtime directories implicitly through startup or tests. Before authorized cleanup, identify the actual project-only scope; preserve credentials, configuration, original user material and neighboring repositories.
 
-**核心职责：管理整个项目的执行流程，协调五个智能体完成任务。**
-
-Orchestrator 是系统的执行控制中心。
-
-主要任务：
-
-1. 接收 ChatBot 确认后的项目意图。
-2. 根据预定义工作流调度五个专业智能体。
-3. 管理智能体之间的任务交接。
-4. 检查上游任务是否完成及输出文件是否有效。
-5. 管理项目文件、任务状态和执行记录。
-6. 识别任务失败、中断和异常情况。
-7. 根据执行状态进行必要的重试或断点恢复。
-8. 向前端反馈当前任务进度及执行状态。
-9. 在任务完成后汇总最终交付结果。
-
-**架构约束：**
-
-- Orchestrator 不参与专业内容创作。
-- 不替代五个智能体的专业职责。
-- 不应将整个工作流的控制逻辑交给某一个智能体自行决定。
-- 优先采用确定性的程序逻辑实现任务调度，避免不必要的多智能体协商和循环调用。
-- 支持用户在适当阶段暂停、继续或重新执行任务。
-
-### 3.2 ChatBot — 需求分析与交互智能体
-
-**核心职责：理解用户意图，明确项目需求，形成可执行的任务 Brief。**
-
-ChatBot 是系统与用户交互的主要入口。
-
-主要任务：
-
-1. 理解用户的初始需求，包括主题、目标、受众、内容范围及预期效果。
-2. 识别需求中的模糊、缺失或存在歧义的信息。
-3. 主动向用户提问，必要时通过交互式提问组件收集补充信息。
-4. 与用户对齐信息图的内容方向、数据需求、叙事目标及视觉偏好。
-5. 将最终确认的需求整理为结构化的项目意图报告。
-
-ChatBot 应尽量减少无必要的提问。当已有信息足以支持后续工作时，应直接形成 Brief，不应反复要求用户确认已经明确的信息。
-
-**输出文件：**
-
-- `intent.md`：人类可读的完整需求说明。
-
-
-`intent.md` 应记录项目目标、主题、受众、内容范围、数据要求、叙事方向、视觉偏好及其他必要约束。
-
-由 `intent.md` 编译的内部索引 应提供便于其他智能体直接读取的标准化字段。
-
-后续智能体均以最终确认的项目意图作为执行依据。
-
-### 3.3 Researcher — 数据调研与采集智能体
-
-**核心职责：根据用户意图，获取可靠的数据、背景资料及参考信息。**
-
-Researcher 根据 `intent.md` 开展数据调研，根据用户是否提供数据源采用不同的工作策略。
-
-**情况 A：用户已提供数据**
-
-- 读取并理解 CSV、Excel、PDF、Word 等文件。
-- 梳理数据结构、字段含义、数据范围及来源。
-- 检查数据是否完整，识别缺失数据及必要的背景信息。
-- 当现有数据不足以支持分析或叙事时，通过网络搜索补充数据及上下文资料。
-
-**情况 B：用户未提供数据**
-
-- 根据用户需求主动搜索互联网。
-- 采集相关数据、统计资料、研究报告、文献及其他可信来源。
-- 优先选择权威、可靠、可追溯的数据来源。
-- 对不同来源的数据进行整理、筛选和必要的交叉验证。
-
-**统一处理要求：**
-
-1. 记录数据来源、原始链接、发布时间及必要的引用信息。
-2. 区分原始数据、背景资料、研究观点和推测性信息。
-3. 保留原始数据，不得擅自改变数据含义。
-4. 对数据缺失、统计口径差异及来源冲突进行标注。
-5. 保留必要的原始文件和中间数据，确保后续分析能够追溯。
-
-**输出文件：**
-
-- `research.md`：调研报告。
-
-
-`research.md` 汇总数据来源、采集结果、数据结构、背景资料、文献及调研结论。
-
-由 `research.md` 编译的内部索引 记录数据集、字段、来源 ID、文件位置及相关元数据。
-
-### 3.4 Analyst — 数据分析与事实提取智能体
-
-**核心职责：从调研材料中提取有价值的数据事实，建立事实之间的逻辑关联。**
-
-Analyst 根据 `research.md`、由 `research.md` 编译的内部索引 及相关原始数据开展分析，将原始信息转化为可用于信息叙事的数据事实。
-
-主要任务：
-
-**1. 数据清洗与筛选**
-
-- 识别和整理与用户需求相关的数据。
-- 处理必要的数据质量问题。
-- 识别重复、缺失及异常数据。
-- 保留数据清洗和转换的必要记录。
-
-**2. 数据分析**
-
-- 运用统计分析、对比分析、趋势分析、关联分析等方法。
-- 识别数据中的规律、差异和特征。
-- 形成有数据依据的分析结论。
-
-**3. 数据事实提取**
-
-提取具有信息价值的数据事实，包括：
-
-- 原始数据片段。
-- 统计分析结果。
-- 数据变化趋势。
-- 重要对比结果。
-- 分析结论。
-- 与事实相关的上下文信息及文本描述。
-
-**4. 逻辑关联构建**
-
-识别不同数据事实之间的：
-
-- 时间关系。
-- 对比关系。
-- 相关关系。
-- 因果关系。
-- 包含及从属关系。
-- 其他具有叙事价值的逻辑关系。
-
-必须区分相关性和因果性，不能将统计相关直接表述为因果关系。
-
-**5. 叙事价值评估**
-
-评估每个数据事实的信息价值、独特性、可信度及其对整体故事线的贡献，为 Designer 提供内容筛选依据。
-
-**6. 证据追溯**
-
-确保重要事实均有明确的数据依据和来源，区分客观事实、分析推论与假设。
-
-#### Data Facts 数据模型
-
-Data Facts 是 Dreamatic · Info 的核心数据资产。
-
-每个数据事实均应作为独立的数据单元，具有唯一 ID，并至少包含以下信息：
-
-- `id`：唯一标识。
-- `title`：事实标题。
-- `type`：事实类型。
-- `description`：事实描述。
-- `value`：关键数值或数据内容。
-- `unit`：数据单位。
-- `evidence`：原始数据及证据。
-- `analysis`：分析结果。
-- `context`：相关上下文。
-- `source_ids`：数据来源。
-- `importance`：重要程度。
-- `relations`：与其他事实的关联。
-- `confidence`：可信度及必要的判断依据。
-
-根据数据类型允许扩展字段，但必须保持核心字段结构统一。
-
-#### 数据事实正式文档与内部索引
-
-**输出文件：**
-
-- `datafacts.md`
-
-`datafacts.md` 用于人类阅读，按照独立数据事实条目组织内容，清晰呈现事实、分析结论、证据和关联关系。
-
-由 `datafacts.md` 编译的内部索引 用于机器读取和后续处理，保存完整的数据事实对象及事实之间的关联网络。
-
-JSON 应采用统一 Schema，并进行必要的结构校验。
-
-#### 前端呈现要求
-
-数据事实应在系统界面中以数据事实列表展示，每个事实采用独立卡片呈现。
-
-卡片包含：
-
-- 与数据事实相关的可视化图片。
-- 事实标题及核心描述。
-- 关键数据及分析结论。
-- 数据来源。
-- 关联事实信息。
-
-具体卡片布局和视觉样式参考 Dreamatic · Web 项目。
-
-### 3.5 Designer — 信息图设计与数据叙事智能体
-
-**核心职责：将数据事实转化为具有叙事逻辑和视觉表现力的信息图设计方案。**
-
-Designer 根据以下文件开展设计：
-
-- `intent.md`：用户需求及设计目标。
-- `datafacts.md`：数据事实及分析结果。
-
-
-设计工作分为三个层次。
-
-**第一层：数据叙事设计**
-
-1. 从数据事实中筛选最具价值和关联性的内容。
-2. 建立数据事实之间的逻辑联系。
-3. 确定信息图的核心主题、叙事主线及故事结构。
-4. 设计信息展开顺序、内容层级和视觉阅读路径。
-5. 确保故事线具有逻辑连贯性和信息价值。
-6. 确保叙事内容有据可依，不得为了追求故事性而扭曲数据事实。
-
-**第二层：整体视觉设计**
-
-1. 确定整体视觉风格、构图、布局及视觉语言。
-2. 设计色彩体系、字体、图形元素及信息层级。
-3. 根据数据特征和叙事需求选择适当的图表形式。
-4. 综合考虑艺术表现力、信息可读性和传播效果。
-5. 规划必要的插画、图像及装饰性视觉素材。
-
-**第三层：技术与图表设计**
-
-1. 明确各个图表及视觉组件的实现方式。
-2. 定义数据字段与图表元素之间的映射关系。
-3. 设计图表的交互行为、动画效果及动态展示方式。
-4. 明确页面结构、组件划分及技术实现要求。
-5. 确保设计方案能够被 Builder 直接执行。
-
-#### Skill 加载能力
-
-Designer 必须支持两类 Skill。
-
-**A. 技术类 Skill（Technical Skills）**
-
-用于提升信息设计和数据可视化能力，包括：
-
-- 信息可视化理论。
-- 图表选择与视觉编码。
-- 数据映射。
-- 信息层级与版式设计。
-- 交互设计。
-- 动画设计。
-- 信息图设计最佳实践。
-
-**B. 艺术类 Skill（Artistic Skills）**
-
-用于加载不同艺术家、艺术流派及视觉风格的创作方法。
-
-例如：
-
-- Picasso Skill：毕加索式视觉语言。
-- Van Gogh Skill：梵高式视觉语言。
-- Monet Skill：莫奈式视觉语言。
-
-加载相应 Skill 后，Designer 应能够将对应艺术家的代表性视觉语言融入信息图设计，包括构图、色彩、笔触、造型和整体视觉表现，而不只是简单应用滤镜。
-
-艺术风格应服务于信息表达，不得损害数据准确性和可读性。
-
-Skill 应优先通过 Pi Harness 原生 Skill 加载机制实现。不同 Skill 应保持独立、可组合和可扩展。
-
-#### 设计方案正式文档与内部索引
-
-**输出文件：**
-
-- `design.md`
-
-`design.md` 用于描述完整的设计理念和设计逻辑，包括：
-
-- 核心主题与设计目标。
-- 数据叙事逻辑及故事线。
-- 内容结构与信息层级。
-- 整体视觉风格与艺术方向。
-- 页面布局与构图方案。
-- 图表类型及数据映射关系。
-- 交互、动画及动态效果设计。
-- 组件结构及技术实现规范。
-
-由 `design.md` 编译的内部索引 用于描述机器可执行的设计规范，包括：
-
-- 页面尺寸及布局参数。
-- 页面区域及信息模块。
-- 组件 ID、类型及层级关系。
-- 图表类型及配置。
-- 数据事实 ID 与视觉元素的映射关系。
-- 色彩、字体及视觉参数。
-- 图片和素材需求。
-- 动画及交互配置。
-- 组件之间的依赖关系。
-
-#### Designer 与 Builder 设计协议
-
-`design.md` 是设计方案的完整说明文档，由 `design.md` 编译的内部索引 是 Builder 实现时使用的结构化设计协议。
-
-必须遵循以下原则：
-
-1. 每个设计组件具有唯一 ID。
-2. 每个数据可视化组件必须明确对应的 Data Fact ID。
-3. 图表配置必须明确数据字段及映射方式。
-4. 设计参数应尽量采用明确的数值和标准化字段。
-5. 图片素材应明确描述用途、尺寸、风格及生成要求。
-6. 动画和交互应明确触发条件、行为及预期效果。
-7. `design.md` 与 由 `design.md` 编译的内部索引 必须保持一致。
-
-Designer 输出后，应检查设计文件是否完整、JSON 是否符合 Schema，以及是否具备可实现性。
-
-### 3.6 Builder — 信息图实现与作品生成智能体
-
-**核心职责：将设计方案转化为可运行、可交付的最终信息图作品。**
-
-Builder 主要依据：
-
-- `intent.md`
-- `design.md`
-
-执行具体实现工作。
-
-主要任务：
-
-**1. 设计方案解析**
-
-- 读取并理解完整的信息图设计方案。
-- 解析 由 `design.md` 编译的内部索引 中的页面结构、组件、数据映射及交互配置。
-- 检查设计方案与 Data Facts 的对应关系。
-- 发现缺失信息或实现冲突时，优先反馈并解决问题，不得擅自改变核心设计意图。
-
-**2. 代码实现**
-
-- 编写前端代码，实现页面结构和视觉组件。
-- 实现图表及数据映射。
-- 实现交互和动画效果。
-- 确保页面结构与设计方案一致。
-
-**3. 视觉素材生成**
-
-- 根据设计要求生成或调用 AI 图像生成工具。
-- 制作必要的插画、图片、背景和其他视觉素材。
-- 统一素材的艺术风格和视觉语言。
-- 合理管理素材文件，避免重复生成。
-
-**4. 数据与叙事实现**
-
-- 确保数据内容与视觉元素正确对应。
-- 完整保留设计方案中的叙事顺序和逻辑关系。
-- 确保所有关键数据均有准确的展示。
-- 不得在实现过程中擅自修改数据事实。
-
-**5. 质量检查**
-
-- 检查页面布局和视觉还原度。
-- 检查图表数据和映射关系。
-- 检查交互及动画是否正常。
-- 检查不同屏幕尺寸下的展示效果。
-- 修复实现过程中发现的问题。
-
-**最终交付形式：**
-
-A. HTML 信息图
-
-- 作为主要交付形式。
-- 能够在浏览器中直接打开和展示。
-- 支持必要的交互与动画。
-- 尽可能支持响应式布局。
-- 保证作品资源及依赖关系完整。
-
-B. PDF 海报
-
-- 支持导出为适合打印和传播的 PDF 文件。
-- 保持必要的字体、图表及图片清晰度。
-- 合理处理页面尺寸、分页及打印边距。
-- 确保 PDF 与 HTML 版本的核心数据内容和视觉表达一致。
-
-最终作品必须兼顾艺术表现力、数据准确性、叙事完整性和实际可用性。
-
-## 四、智能体通信与文件交接规范
-
-五个智能体通过统一的项目工作空间协作，采用 Markdown 正式交接、程序生成内部索引的通信机制。
-
-### 4.1 Markdown：逻辑指令与文档交接
-
-Markdown 用于记录：
-
-- 用户意图。
-- 调研报告。
-- 数据分析结果。
-- 设计方案。
-- 执行说明。
-- 任务交接信息。
-
-核心文件如下：
-
-| 智能体 | 主要输出 | 下游使用者 |
-|---|---|---|
-| ChatBot | intent.md | Researcher、Designer |
-| Researcher | research.md | Analyst |
-| Analyst | datafacts.md | Designer |
-| Designer | design.md | Builder |
-| Builder | 最终作品及交付说明 | 用户 |
-
-### 4.2 程序内部索引
-
-程序解析 Markdown 生成机器可读内部索引，包括：
-
-- 项目意图及任务参数。
-- 数据集及数据来源。
-- 数据事实及关联网络。
-- 图表配置及数据映射。
-- 设计组件及属性。
-- 工具调用参数及执行结果。
-- 任务执行状态。
-
-所有内部索引应使用明确的 Schema，规定字段名称、类型、必填项和关联关系。
-
-### 4.3 统一文件管理原则
-
-1. 智能体仅维护 Markdown；程序解析并校验内部索引。
-2. Markdown 面向人类阅读，JSON 面向程序读取。
-3. 内部索引必须由正式 Markdown 可靠推导，不要求智能体维护副本。
-4. 不允许下游智能体随意覆盖上游智能体的正式产物。
-5. 需要修改上游产物时，应形成明确的修改记录并触发必要的下游任务更新。
-6. 保留必要的版本信息和更新时间，便于问题追踪与恢复。
-
-## 五、项目目录与产物组织
-
-采用以项目为单位的独立工作空间，避免不同用户任务之间的数据混淆。
-
-建议目录结构如下：
-
-dreamatic-info/
-- agents/
-  - chatbot.md
-  - researcher.md
-  - analyst.md
-  - designer.md
-  - builder.md
-- orchestrator/
-  - 调度与状态管理相关代码
-- skills/
-  - technical/
-  - artistic/
-- schemas/
-  - intent.schema.json
-  - research.schema.json
-  - datafacts.schema.json
-  - design.schema.json
-  - task-state.schema.json
-- projects/
-  - project-id/
-    - input/
-    - research/
-    - analysis/
-    - design/
-    - assets/
-    - output/
-    - state/
-    - intent.md
-    - research.md
-    - datafacts.md
-    - design.md
-    - task-state.json
-    - execution-log.md
-- config/
-  - models/
-  - tools/
-- src/
-  - 前端与系统业务代码
-
-以上为建议结构。实际开发时应优先适配现有项目架构，不要为了满足目录示例而破坏既有代码组织。
-
-不同项目必须拥有独立的工作空间、任务状态和文件产物。
-
-## 六、任务状态管理与断点恢复
-
-系统必须具备可靠的任务持久化和断点恢复能力。
-
-任务状态不能仅依赖大模型的对话上下文，必须通过持久化文件或数据库进行管理。
-
-### 6.1 任务状态管理
-
-至少需要记录：
-
-- 项目 ID。
-- 当前任务阶段。
-- 当前执行智能体。
-- 任务状态。
-- 已完成任务。
-- 待执行任务。
-- 任务输入及输出文件。
-- 最近一次成功执行时间。
-- 错误及异常信息。
-- 必要的上下文和恢复信息。
-
-建议采用统一的 `task-state.json` 管理上述信息。
-
-任务状态至少应区分：
-
-- pending：等待执行。
-- running：正在执行。
-- completed：执行完成。
-- failed：执行失败。
-- interrupted：任务中断。
-
-### 6.2 断点恢复
-
-当任务因用户中断、程序异常或其他原因停止时：
-
-1. 自动保存当前任务状态。
-2. 持久化保存已有文件和执行记录。
-3. 记录尚未完成的任务及其依赖关系。
-4. 用户重新发出继续执行的指令时，自动识别当前项目。
-5. 检查最近一次有效的任务状态及产物。
-6. 判断已经完成的工作，避免重复执行。
-7. 从最近一个尚未完成的有效节点继续执行。
-
-### 6.3 任务重试与一致性
-
-- 对可恢复的临时错误允许自动重试。
-- 对无法自动解决的问题记录错误并反馈用户。
-- 重试不得造成重复文件、重复任务或重复交付。
-- 上游文件发生变化时，应识别受影响的下游任务，并重新执行必要的部分。
-- 已完成且未受影响的阶段不应重复运行。
-
-## 七、前端交互与可视化要求
-
-系统前端应与 Dreamatic · Web 和 Dreamatic · Art 保持一致的设计风格。
-
-核心界面至少包括以下部分：
-
-### 7.1 ChatBot 对话区
-
-用于用户输入需求、查看 AI 回复及进行需求确认。
-
-支持交互式提问和必要的文件上传。
-
-### 7.2 数据事实列表
-
-展示 Analyst 提取的数据事实。
-
-采用卡片形式呈现数据可视化图片、核心数据、事实描述、分析结论及数据来源。
-
-支持浏览和查看不同数据事实之间的关联。
-
-### 7.3 智能体执行状态区
-
-展示五个智能体的执行状态、当前任务及阶段性产物。
-
-用户能够了解当前任务进度，并在适当阶段暂停或继续任务。
-
-### 7.4 信息图作品展示区
-
-用于展示 Builder 生成的最终作品。
-
-支持 HTML 作品预览，以及 PDF 海报导出。
-
-具体页面结构和交互形式应在研究现有 Dreamatic 项目后确定。
-
-## 八、系统质量与数据可靠性要求
-
-### 8.1 数据真实性
-
-- 不得编造数据或虚构数据来源。
-- 所有重要数据事实必须具有可追溯依据。
-- 对估算值、推论及不确定数据进行明确标注。
-- 发现来源冲突时应保留并说明差异。
-
-### 8.2 逻辑严谨性
-
-- 不得混淆相关关系和因果关系。
-- 数据叙事必须建立在真实的数据关联之上。
-- 不得为了视觉效果或故事性歪曲数据。
-- 数据事实与最终图表必须保持一致。
-
-### 8.3 设计质量
-
-- 图表类型应与数据特征相匹配。
-- 视觉层级应服务于信息理解。
-- 艺术表现不得影响信息可读性。
-- 动画和交互应具有明确的信息传达目的。
-- 最终作品应具有整体性，而不是简单堆叠图表。
-
-### 8.4 工程质量
-
-- 保持模块化和可维护性。
-- 对核心 JSON 文件进行 Schema 校验。
-- 对智能体输入输出进行必要验证。
-- 对关键任务进行执行日志记录。
-- 保证项目数据隔离和文件管理安全。
-- 对最终 HTML 和 PDF 进行必要的自动化验证。
-
-## 九、Codex 开发执行要求
-
-Codex 应按照以下步骤开展项目开发。
-
-### 第一阶段：项目调研
-
-在修改代码之前，全面检查现有项目。
-
-重点研究：
-
-1. Pi Harness 最新稳定版本的架构、API 和扩展机制。
-2. DreamaticWeb 项目的前端结构、组件及设计规范。
-3. Dreamatic 项目的前端结构、组件及设计规范。
-4. 现有项目可以复用的工具、组件、依赖和资源。
-5. 当前项目的运行方式、构建方式及部署方式。
-
-输出项目技术调研及实施计划。
-
-### 第二阶段：系统架构设计
-
-明确：
-
-- 五个智能体的职责和输入输出。
-- Orchestrator 的任务调度机制。
-- 模型独立配置机制。
-- Pi Skill 加载机制。
-- Markdown 正式交接协议。
-- Data Facts 数据模型。
-- Designer 与 Builder 设计协议。
-- 项目文件管理及状态持久化机制。
-
-优先完成核心数据 Schema 和模块接口设计，再进入具体实现。
-
-### 第三阶段：核心系统开发
-
-按照以下顺序实施：
-
-1. Pi Harness 基础集成。
-2. 项目工作空间及文件管理。
-3. Orchestrator 调度机制。
-4. 五个智能体的独立定义和运行。
-5. 模型配置机制。
-6. Skill 加载机制。
-7. Markdown 正式交接机制。
-8. 任务状态管理及断点恢复。
-
-### 第四阶段：前端开发
-
-基于 Dreamatic · Web 和 Dreamatic · Art 的现有设计语言，完成：
-
-- ChatBot 对话区。
-- 数据事实列表及卡片。
-- 智能体执行状态区。
-- 信息图展示区。
-- HTML 预览及 PDF 导出。
-
-尽可能复用已有组件和样式。
-
-### 第五阶段：完整工作流验证
-
-通过真实测试任务验证完整工作流：
-
-用户输入需求 → ChatBot → Researcher → Analyst → Designer → Builder → 最终信息图。
-
-至少验证以下场景：
-
-1. 用户上传 CSV 数据并生成信息图。
-2. 用户上传 Excel、PDF 或 Word 文档并提取数据。
-3. 用户不提供数据，由 Researcher 自动搜索和采集。
-4. Analyst 能够提取 Data Facts 并建立关联关系。
-5. Designer 能够生成完整的数据叙事和设计方案。
-6. Builder 能够按照 由 `design.md` 编译的内部索引 还原设计并生成 HTML。
-7. 系统能够导出 PDF 海报。
-8. 用户中断任务后能够从正确节点恢复。
-9. 修改上游数据后能够正确识别并更新受影响的下游产物。
-10. 更换任意智能体的模型配置后，系统仍能正常运行。
-
-### 第六阶段：系统优化与交付
-
-检查并优化：
-
-- 智能体执行效率。
-- 数据准确性。
-- 任务恢复可靠性。
-- 前端视觉一致性。
-- 信息图设计还原度。
-- HTML 和 PDF 输出质量。
-- 系统整体稳定性。
-
-完成必要的测试、问题修复和项目文档。
-
-开发过程中应分阶段交付可运行成果，不应只输出架构说明或示例代码。
-
-## 十、最终产品目标
-
-Dreamatic · Info 不应只是五个 AI Agent 串联起来的自动化工作流，而应成为一个完整的智能信息设计平台。
-
-系统以五个专业智能体为执行主体，以 Orchestrator 为调度中心，以 Pi Harness 为底层运行框架，以 Skills 为专业能力扩展机制，以 Data Facts 为核心数据资产，以标准化设计协议连接数据分析与视觉实现。
-
-最终实现：
-
-**从自然语言需求出发，自动获取数据、发现事实、建立关联、构建故事、设计信息图，并生成兼具数据洞察、叙事逻辑与艺术表现力的高质量视觉作品。**
+Report implementation, removed paths, supported/unsupported capabilities, checks, browser verification and real-provider limitations honestly. Fixture success is not real generation-quality or performance evidence. See [Implementation](INFOGRAPHIC_IMPLEMENTATION.md), [Architecture](ARCHITECTURE.md), [Protocol](MARKDOWN_PROTOCOL.md), [Plan](REFACTOR_PLAN.md) and [Validation](VALIDATION.md) for current details.

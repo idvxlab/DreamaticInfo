@@ -1,10 +1,5 @@
 ---
 name: information-design
-description: Data storytelling, chart choice, visual encoding, evidence and readable infographic composition.
+description: Entry guide for task-specific infographic skills.
 ---
-从用户目标与事实关联中选择核心故事。以一个信息密度合理的主标题建立认知，再按证据顺序展开。大小/位置编码优先于面积和色相；条形图从零开始，折线图仅用于有序序列，饼/环仅用于非负且构成整体的数据。单位、分母、时间范围和来源保持可见。不要将不相关的事实强行串为因果。用注释突出差异，用留白建立层级。交互帮助比较或显示依据；动画只解释变化。艺术语言服务于信息，不改变数值映射。文字/背景对比充足；响应式阅读路径与打印内容一致。
-
-
-## D3 图表实现
-
-Designer 和 Builder 使用专业 D3 工具包（先调用 read_visualization_guide）。工作台用 D3 比例尺和形状函数计算；Builder 保存时由系统内嵌官方 D3 运行库，作者脚本使用全局 d3，禁止 CDN 或重复复制库源码。条形数值域包含零，折线按真实时间间隔，环图要求真实构成整体；明确单位、原始明细和来源。保留全部观测，不合并同名标签、不猜测混合单位换算，不把相关性当因果。SVG 包含可读标题、键盘交互并适配打印和减少动态偏好。
+Load only the relevant sibling Skills: infographic-selection, visual-encoding, composition, asset-design, interaction-print, quality-review and structured-visualization. Combine artistic Skills independently. Read read_visualization_guide before chart design and implementation.

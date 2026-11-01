@@ -24,7 +24,7 @@ try {
     assert.equal(finished.state.status, "completed", finished.state.error || "");
     for (const role of roles) {
       const artifact = await store.readArtifact(finished, role);
-      assert.equal(artifact.protocol, "markdown-v1");
+      assert.equal(artifact.protocol, "infographic-markdown-2026");
       const parsed = parseDocument(role, artifact.markdown);
       assert.deepEqual(parsed.data, role === "builder" ? { summary: artifact.data.summary } : artifact.data);
       assert.equal(parsed.notes, artifact.notes);
@@ -44,6 +44,9 @@ try {
     await engine.reconcile(finished, await getModels());
     assert.equal(finished.state.stages.chatbot.status, "completed");
     assert.equal(finished.state.stages.analyst.status, "pending");
+    const retained = (await store.detail(finished)).retained_documents;
+    assert.ok(retained?.includes("datafacts.md"));
+    assert.ok(!retained?.includes("intent.md"));
   });
   await test("Markdown table escaping preserves pipes, quotes, HTML, line breaks, empty strings and numeric text", () => {
     const data = { title: 'A | B <br> &amp; `quote`', topic: "first\nsecond\r", objective: " \t\\| original \t", audience: "", scope: "### Not a heading", data_requirements: "<script>data</script>", story_direction: "A &#10; B", visual_preferences: "未提供", constraints: ["", "A | B", "C\nD"] };

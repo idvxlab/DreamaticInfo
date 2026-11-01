@@ -1,75 +1,46 @@
-# Designer 与逻辑叙事工作台
+# Designer and narrative workbench
 
-实施日期：2026-10-31。
+Implemented 2026-10-31. The original UI only displayed final design and disconnected fact IDs; interrupted design had no recoverable intermediate output. The implementation adds explicit content/order rationale, immutable Markdown drafts, native tools and section/fact/evidence/component navigation while retaining five roles and deterministic scheduling.
 
-## 调查与实施计划
+## Contract
 
-原界面仅读取 Designer 完成后提交的 design，设计过程中始终为空；故事线只有文本事实编号，没有事实、来源、关系与图表的交互定位。Designer 没有草稿工具，中途暂停时也没有可展示的设计中间成果。现有设计协议缺少独立的选材和排序依据，组件仅引用事实，不能准确归属故事段落。
+narrative_rationale explains the overall message, question and reading sequence. Each storyline item has rationale for selection/order. Components explicitly reference story_ids; any component facts must belong to the union of its linked sections. Global headings/decoration may have no section. At least one section and nonblank rationale are required. Current composition, mappings, references, units, parent cycles and reference geometry are validated. There is no old-field completion or conversion; JSON indexes are compiled from Markdown.
 
-按以下顺序实施：扩充明确的叙事依据和段落映射契约；建立 Markdown 不可变版本草稿；接入 Pi 原生工具；提供只读进度投影；改造工作台的段落—事实—证据—组件联动；验证恢复、失效、正式提交边界和浏览器交互。五个专业角色及确定性 Orchestrator 保持不变。
+## Native tools
 
-## 当前设计契约
+- read_design_draft reads current revision/issues/Markdown, optionally either story_id or component_id, never both.
+- save_design_draft saves a draft with base_revision for updates. Save the whole composition/content plan before detail; empty unplanned lists follow the supplied empty-list marker. Pending preflight issues are ordinary successful saves.
+- patch_design_story replaces/appends one full section item with current revision and story_id, preserving other text/notes and rejecting extra sections.
+- patch_design_component does the same for a visual component. Component issues must not be routed through the story tool; wrong-tool errors explain the correct operation.
+- reorder_design_stories requires an exact, unique complete ID list and cannot delete sections. Update rationale when order changes.
+- submit_stage requires a saved visible Designer draft before official submission. Analyst/Designer may submit draft_revision; final validation is complete and Builder starts only after official design.
 
-- `narrative_rationale`（整体编排依据）：主线、核心问题、展开路径及安排理由。
-- 每段 `rationale`（选材与顺序理由）：为什么选取所列事实、为什么安排在该处。
-- 每个组件 `story_ids`（段落编号列表）：显式关联故事段落。带事实映射的组件必须关联段落，组件事实必须在这些段落的事实并集中；全局标题/装饰组件可为空。
-- 正式故事线至少一段；依据不能为空或纯空白。已有事实编号、图表字段/单位、父级和几何范围继续严格校验。
+Useful parsing repairs, fewer issues or additional verified sections reset stagnation counters. Formal failures, invalid arguments and no-progress states are separate; stage/run deadlines remain authoritative.
 
-这些是当前 Markdown 协议的字段，不提供旧设计字段补齐或兼容转换。程序生成 JSON 内部索引，模型只维护 Markdown 报告。
+## Persistence and API
 
-## Designer 原生工具
+state/drafts/designer/<scope>/revisions/<UUID>/ stores draft.md, validation.md and meta.json before atomically switching current.json. Scope binds requirements, intent, research, official facts, design schema and actual source digests. Read, edit and submit recheck source content.
 
-- `read_design_draft`：读取当前范围的版本、校验结果和原始 Markdown；可单独指定 story_id 或 component_id，只读取一个条目，不能同时指定。
-- `save_design_draft`：首次保存，或以 base_revision 更新整份草稿。未规划的列表显式写“无”，其余章节仍按模板填写。先保存故事线，再补视觉方案。预检待修问题正常返回，不占用正式提交失败预算。
-- `patch_design_story`：按当前 revision 和 story_id 替换/追加一个完整的 `### 条目 N` 段落；不能附加其他设计章节，其他段落和说明原文保留。
-- `patch_design_component`：按当前 revision 和 component_id 替换/追加完整的视觉组件；保留其他条目、故事线与文末说明，拒绝过期版本及跨章节注入。组件问题不再借用段落工具修复，误用时返回明确的正确工具提示。
-- `reorder_design_stories`：提供完整且不重复的现有段落 ID 排序；不能借排序删段落。改变顺序后，Designer 应更新对应安排理由。
-- `submit_stage`：Designer 须先保存可查看的设计草稿，不能跳过中间成果直接提交；Designer 与 Analyst 均可使用 draft_revision，重新完整核验并提交同一份已保存 Markdown；其他角色仍提交 markdown。
+Read-only polling endpoints are GET /api/projects/:id/design/progress, /design/draft?revision=<UUID> and /design/validation?revision=<UUID>; project detail also returns design_progress. Downloads only accept current scope/revision, with no arbitrary path. Changed requirements/facts/sources hide old drafts. Paused/failed drafts remain; formal completion hides draft projections and exposes official design.
 
-草稿修复复用进展保护：有效的结构修复、问题减少或新增通过段落重置窗口；重复停滞才消耗无进展预算。正式提交、草稿工具参数错误与无进展分别计数。原有阶段时限仍生效。
+## Workbench behavior
 
-## 保存、恢复和失效
+Reuse Web/Art paper, ink, lime, cards and fact components. Saved state is refreshed through existing 1.8-second polling/SSE without forcing tabs or pretending to reveal internal model thinking. Status derives from persisted narrative/visual lists and validation only.
 
-`state/drafts/designer/<scope>/revisions/<UUID>/` 保存 draft.md、validation.md 和内容摘要 meta.json，写完后原子切换 current.json。scope 绑定当前事实、需求、intent、Research、设计 Schema 和实际来源内容摘要。读取、修改及提交都重新核对来源内容。
+The workbench shows whole-message rationale, section order, selection reasons, supporting facts and component mappings. Section selection updates facts, Analyst-supplied relationships and visuals. Fact inspection opens original quotation/location/source and can locate the fact tab. Relationship inspection shows both endpoints; shared selection does not imply causation. Unselected facts remain inspectable.
 
-API 轮询只读取，不写草稿或来源视图：
+Views are narrative, visual plan and checks. Evidence uses an in-workbench dialog; geometry and implementation parameters expand on demand. User navigation, selection and scroll survive polling. Unparseable drafts retain document/check links; formal designs use the same navigation with an official-result marker. See [NARRATIVE_UI_DESIGN.md](NARRATIVE_UI_DESIGN.md).
 
-- GET `/api/projects/:id/design/progress`；项目详情同时返回 design_progress。
-- GET `/api/projects/:id/design/draft?revision=<UUID>`。
-- GET `/api/projects/:id/design/validation?revision=<UUID>`。
+## Local component repair and units
 
-下载仅允许当前范围、当前版本；不提供任意文件路径读取。需求、事实或来源变化时旧草稿隐藏；暂停/失败保留已保存内容。正式 Designer 提交后隐藏草稿投影，显示正式方案，Builder 此时才获得 design。
+Diagnostics aggregate component ID/title, field, fact, actual and required units, relationships, mapping, series, parent cycle and layout issues. Story/component repair progress uses separate namespaces to avoid ID collisions. Locate Component switches section and reveals its issues only on explicit action, not polling.
 
-## 工作台交互
+Only reference-ID lists treat the supplied none marker or its single list-item form as empty; mixed real IDs/none are rejected. Free-text list entries retain literal content. Original Markdown is not rewritten.
 
-沿用 Art/Web 的纸色、墨色、草绿、卡片与现有事实组件。Designer 开始时显示运行提示和 Tab“设计中”，不强行切换用户 Tab。项目详情原有 1.8 秒轮询和 SSE 事件触发刷新，更新只基于已保存成果，不展示或推测模型内部思考。
+A series explicitly declaring multiple units with commas/semicolons cannot map to one bar/line axis or donut, even when mapping.unit copies that mixed string. Metric uses verified core value/unit. Designer may use metrics/text to explain limits; multiple charts require Analyst to create evidence-backed homogeneous facts. Never guess conversions, remove observations or disguise units. Quotient/product units such as mg/dL and kg·m^-2 are not lists.
 
-工作台显示整体主线依据、故事顺序、各段选材理由、引用事实和明确的组件映射。选择段落后更新支撑事实、逻辑关系和视觉规划；选择事实可查看原始引文、位置和来源，并跳到数据事实 Tab 定位。选择关系时同时展示两端事实，关系及其依据来自已正式提交的 Analyst，不把共同选用事实解释为因果。未选事实单独可查。
+## Verification history and limits
 
-保存状态显示“叙事编排”“视觉规划”“预检通过，等待正式提交”，仅由已保存列表和校验结果推导，不冒充模型实际执行进度。结构错误仍可查看原始 Markdown 和修正清单。正式提交后沿用相同联动界面，标识正式成果。
+Historical checkpoints passed 118 tests for drafts/API/native Pi, 123 after component/unit protection, and 126 after UI reorganization; check and production build passed. Isolated narrative-preview.mts uses temporary configuration/projects and Chromium to verify section/relationship/evidence navigation, updates, focus, component location, no scroll stealing, narrow layouts and official switching. Product imports no fixture executor.
 
-## 验证与边界
-
-完整 118 项测试通过，包括四项草稿工具/恢复测试、三项只读 HTTP/API 测试和真实 Pi Session 配合本地确定性模型服务的 Designer 工具测试。严格类型检查和生产构建通过。
-
-`tests/fixtures/narrative-preview.mts` 使用临时项目、独立服务和隔离 Chromium 实测：段落切换、关系两端、证据展开、事实 Tab 定位、保存后的自动更新与选中状态保留、窄屏无横向溢出、正式提交切换、无页面异常。截图只保存于临时目录，测试项目结束后清理，产品不导入执行器或测试素材。
-
-未调用外部付费模型、未自动重跑用户项目。提示词要求分批保存，但实际模型的保存频率和叙事质量仍需真实运行观察。程序校验结构、引用和映射，不能证明自由文本论证必然成立；事实原文证据和相关性/因果性限制继续保留。
-
-## 组件修复与单位保护（2026-10-31）
-
-本轮调查发现：模型把 heading 组件交给 patch_design_story，触发故事线的未知字段“类型”；整版报告又只返回首个通用引用/单位错误，未说明具体组件。空编号列表写成单项 `- 无` 时被当作未知事实；部分序列显式声明了多个单位，却尝试在一张图里表达。
-
-修复顺序：增加组件专用局部读写与误用提示；将草稿与正式提交共用的语义校验改为逐组件汇总；明确空引用列表语义；阻止混合单位同轴/构成图并保留原始数据；补充程序、原生 Pi 工具和浏览器验证。
-
-校验清单包含 component 字段、组件编号/标题、具体字段、事实编号、实际单位和要求单位。引用、段落归属、数值字段、单位、数值序列、父级循环、布局等问题一次返回；修复进展同时跟踪段落与组件，使用不同命名空间，避免同名编号相互混淆。页面可点击“定位组件”，跨段落定位并展示该组件的待修清单；后台轮询不触发重复滚动。
-
-仅编号列表（fact_ids/story_ids/source_ids）中的单独“无”或单项“- 无”表示空列表；与真实编号混写时拒绝，其他自由文本列表的“- 无”保留为普通文字。原始 Markdown 不被改写。
-
-显式使用顿号、逗号或分号声明多个单位的序列，禁止直接映射为同轴 bar/line 或 donut；即使 mapping.unit 照抄混合单位字符串也不能通过。metric 使用已核验核心 value/unit，不能混用序列单位。Designer 可使用核心指标或文字说明限制；需要多张图时，应由 Analyst 按单位拆分有证据的事实，不由程序猜测、过滤、换算或删除观测。Analyst 新提交时也会拦截混合单位序列，事实卡片保留原始标签和值并停止绘制混合单位同轴预览。除法/乘积单位如 mg/dL、kg·m⁻² 不按单位列表处理。
-
-完整 123 项测试、类型检查和生产构建通过。新增覆盖组件局部保存及边界、一次返回全部组件错误、编号空标记、混合单位与事实卡片、真实 Pi 本地会话的局部读取/误用提示/组件修正/参数失败预算。隔离 Chromium 验证组件定位、修复更新和轮询不抢滚动位置，原有叙事联动、窄屏与正式切换通过。未调用外部付费模型，也未自动改写或重跑用户项目；已有混合单位事实的实际拆分仍需依据原资料核实。
-
-## 界面分层重组
-
-逻辑与叙事工作台已改为叙事编排、视觉方案、检查三个任务视图；事实详情与证据使用工作台内抽屉，布局和组件技术参数按需展开。调查、设计计划、布局与验证见 [NARRATIVE_UI_DESIGN.md](NARRATIVE_UI_DESIGN.md)。
+External paid models and user projects were not run. Prompt requirements do not guarantee real save frequency or narrative quality, and program structure/reference checks cannot prove free-text reasoning. See [VALIDATION.md](VALIDATION.md) for current totals.

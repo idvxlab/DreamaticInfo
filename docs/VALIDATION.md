@@ -1,140 +1,79 @@
-# 验收记录
+# Validation record
 
-日期：2026-10-30；Node 25.6.1；Pi Harness 1.4.0；React 19；Vite 7；Chromium PDF 使用本机 Chrome 156。
+## Current accepted checkpoint
 
-## 已通过
+After the system refactor and removal of the superseded image cache, 144/144 tests passed in 29.076 seconds. npm run check, npm run build and git diff --check passed. Removing one obsolete cache-function test explains the reduction from the preceding 145-test checkpoint; no active-feature test was skipped.
 
-- TypeScript 严格检查与 Vite 生产构建。
-- 自动化测试：133 项。包含使用真实 Pi Session + 本地确定性 OpenAI-compatible 测试服务，实际执行 submit_stage 工具；同时确认未暴露 bash/write。
-- 完整五阶段演示：CSV → intent → research → datafacts → design → HTML；JSON Schema、来源/事实/组件引用、图表字段映射及证据原文核对。
-- 成功产物跳过；中断后从未完成阶段恢复；启动恢复 running 状态；输入、上游产物或独立角色模型参数变化使正确阶段及下游失效。
-- CSV/XLSX/DOCX/PDF 读取；PDF 生成后检查文件签名，再回读文本确认关键数据。
-- 路径穿越、项目外符号链接、私网/loopback/mapped IP、非 HTTPS URL 拒绝。
-- API smoke：真实 HTTP 创建演示项目、执行五阶段、HTML 预览与 CSP、PDF 下载、跨来源写入拒绝。
-- 浏览器：桌面 Chrome 检查三栏工作台，内置浏览器约 390px 宽度检查响应式页面；演示执行、三张事实卡、最终 HTML 和导出按钮正常。旧示例截图已随产品示例移除。
-- 公开检索工具：Bing RSS 返回真实网页结果。DuckDuckGo 在当前网络请求超时，已加入 Bing 备用通道，Brave API 为优先可配置服务。
-- 公开来源采集：实际获取 World Bank 的中国人口指标 API（2023–2024），保留原始响应与标准化来源文件。此为工具验证，不是模型生成结论。
+Coverage includes native Pi against local deterministic providers; five-role Markdown workflow; immutable commits/recovery/invalidation; real-source quotations/calculations; imports; public-network/path isolation; structural semantics/roundtrips; asset concurrency/cache/fallback/cancellation; explicit review protocol and Builder-only repair routing; isolated Chromium desktop/mobile/print, offline D3 and PDF essential-text extraction.
 
-## 未完成真实环境验收
+Three synthetic infographic classes live only under tests/fixtures: statistics, illustrated explanation and timeline/process. Chromium observes zero runtime network requests. OfficeParser extracts actual generated PDF text and checks essential headings/sources; that is not complete graphic equivalence.
 
-以下项目未进行外部真实提供商验收。本次配置接通检查使用独立临时配置及本地服务，没有调用用户外部模型，没有借用相邻项目密钥，也未将测试执行当作真实模型结果。
+The actual workspace root was inspected read-only: workspace/projects contained zero active UUID projects and only .trash. No runtime/recycle content, originals, credentials or configuration was deleted or implicitly cleared by startup/tests.
 
-1. 真实 LLM 从 Brief 到交付物的完整生成质量，以及多轮提问的实际模型行为。
-2. 更换不同真实模型后的工具遵循度、推理参数兼容性与质量。
-3. 艺术 Skill 实际视觉遵循度、AI 图像生成工具的真实调用。
-4. 真实主题检索的覆盖度、统计口径与因果判断质量。
-5. 复杂 Canvas/动画作品打印还原、跨浏览器与多字体环境的长期兼容性。
+## Historical checkpoints
 
-以上需要配置有效提供商认证后运行真实验收任务。现有自动化不能代替事实判断与视觉质量核对。
+Counts describe the suite at each point; changes in coverage mean suite durations cannot serve as generation-performance comparisons.
 
-## 当前范围限制
+| Change | Passed tests | Verification |
+| --- | --- | --- |
+| Initial Settings/.env wiring | 42 | Fields/examples/precedence, role auth/capabilities, search/upload/image/PDF/retry consumers; check/build |
+| Art-aligned conversation | 46 | Ordering, role cards, results, clarification, IME/pause/no-project state and escaping; browser tooling disabled at this point |
+| Formal Markdown and removal of old compatibility | 56 | Lossless fields/evidence/series/layout, escaping, rejection/budgets, native Pi local repairs, demand reads, recovery, no report JSON copies; check/build/PDF |
+| Research intermediate workbench | 63 | Plan/queue/body checks, concurrency/deduplication, scoped cache, budgets, source tampering, API/SSR; historical browser tooling disabled |
+| Open-source reader | 70 | Cookies, loops/public redirects, Markdown, dynamic content, resource limits/cancellation; IDF resource read about 751 characters and three chain nodes |
+| Reader failure investigation | 76 | Official BioC identity/body/scope and actual Chromium HTTPS CONNECT/cookies/data POST/private blocking; public PMC/PubMed/IDF observations in WEB_READER.md |
+| Startup/interruption display | 78 | Startup counts distinguished from fetches; user pause versus shutdown; stale error clearing |
+| Analyst evidence/drafts | 84 | Verbatim tables, combined enum/source errors, invalid draft persistence, append/local repair, versions/scopes/progress; native Pi/local provider |
+| Facts-tab draft progress | 90 | Read-only API/downloads, polling/local updates, paused/malformed/stale/official states and safe rendering; actual isolated wide/narrow browser |
+| Ten statistical facts | 99 | Source receipts, exact recomputation/tamper rejection, ties/IQR/Pearson/bins/time/CSV/unit mapping; native Pi/local provider |
+| Markdown separators | 101 | Thematic breaks do not hide facts; real quotation errors stay attached and block submission; read-only project inspection did not rewrite/resume it |
+| Sustained Analyst repair | 110 | Useful repairs beyond five operations, parsing/progress, stagnation/oscillation/deletion protection, association-unit ranges; native Pi completed eight partial fixes and bounded invalid submissions |
+| Designer workbench | 118 | Rationale/section mappings, draft patches/reorder/recovery/projection/official boundary; Chromium navigation and narrow layouts |
+| Component repair and mixed units | 123 | Correct tool/precise issues, empty-reference markers, unit rejection, native Pi budgets; browser location and stable scroll |
+| Narrative UI organization | 126 | Three views, evidence dialog, grouped components and checks; seven-section/28-component Chromium scenario, keyboard/focus/polling/390px/formal switching |
+| D3 integration | 133 | Seven additional visualization cases, zero baselines/time/duplicate labels/percent boundaries/runtime license/idempotence/CDN rejection; Chromium offline D3/PDF and native Pi |
+| Refactor baseline | 137 | 25.596 seconds; check passed; initial sandbox tsx IPC denial required approved normal test execution |
+| Contract/execution foundation | 139 | 25.920 seconds; shared deadlines/cancel/delivery gates; check/build/diff |
+| Expanded refactor | 145 | 29.291 seconds; structures/assets/review-routing/three-media/PDF tests |
+| Superseded cache cleanup | 144 | 29.076 seconds; check/build/diff passed |
 
-- 本地单用户部署，没有公网多用户认证/配额。
-- PDF 扫描件需 OCR；旧 `.xls` / `.doc` 需转换；远程二进制文档需先下载再上传。
-- 自动检查会校验结构、引用、引文、组件与事实标记，不会证明任意生成 JavaScript 的所有数据绑定都正确。
-- 暂停会保留最近的完整阶段。中断阶段的新会话从有效上游重建，不恢复到该阶段的单个 token 或工具中间点。
-- 数据事实置信度来自 Analyst 判断，不是独立验证器提供的统计置信区间。
+Earlier project-management acceptance covered immediate empty drafts, explicit selected-project sending, rename independent of workflow, exclusive writes and same-filesystem recycle deletion. Product demo execution was removed; menu positioning avoids clipping. Custom endpoints default to system instructions when developer messages are unsupported, without conflating reasoning capability. Isolated Settings/health/Vite-proxy inspection returned 200 and no secret values. These are local wiring/behavior checks, not proof of remote service availability.
 
-## Settings 与 .env 改造验收
+## Unverified live behavior and remaining limits
 
-参考 Art 的 SettingsModal、config-store、agent-session、image-request 与最终设置样式实现四模块设置。新增测试验证：所有默认字段实际落盘、密钥不回传及留空保留、非法值保存不产生部分写入、保留注释和其他键、并发保存串行化、重启项不会静默改变活动目录、当前 `.env` 字段与默认值一致。使用本地测试服务验证从 `.env` 注册的真实 Pi 会话请求，以及图像地址、密钥、模型和尺寸确实进入请求。未使用真实外部密钥。浏览器检查桌面双列与窄屏单列、标签切换、保存成功反馈。
+The refactor did not invoke paid/live model, search, image-generation or real Designer visual-review services in a controlled end-to-end comparison. Local Pi protocol tests and injected reviewers verify control behavior, not actual generated content, artistic Skill adherence or external compatibility. Historical reader public-link tests are separate from refactor generation-quality verification.
 
-## 项目管理验收
+No real before/after first-preview/final-delivery/PDF, model-call, retry/repair or success-rate dataset exists. Do not substitute fixture/suite timings or claim speed/quality gains. Compare consistent inputs/models/services/quality gates when live acceptance is performed.
 
-新增草稿持久化与立即列表可见性、自定义名称与智能体 checkpoint 分离、改名后不重跑、非法名称拒绝、整目录可恢复删除、运行中删除保护、目录穿越与符号链接边界测试。API smoke 覆盖空草稿创建、列表/详情读取、改名、删除至 `.trash`，均仅使用测试新建项目。默认目录保持 workspace/projects，配置项可指定独立根目录且重启生效。
+Program checks do not prove aesthetic quality, arbitrary JS data bindings, complete occlusion, complex transparent-background contrast or every print crop. Vision cannot replace evidence recomputation. Unsupported image capability is disclosed, not a pass. Repairs still batch three media rather than local screenshot regions. Tall-page screenshots may cover only the viewport. PDF text checks do not prove every visual identical. Interrupted waiting is not yet separately aggregated by manual pause versus shutdown. Maps/networks/Sankey, legacy binary Office/scanned-PDF OCR and public multi-tenant deployment remain outside current support.
 
-## 移除产品示例与项目菜单裁切修复
+See [Implementation](INFOGRAPHIC_IMPLEMENTATION.md), [Refactor plan](REFACTOR_PLAN.md) and the individual workbench/reader documents for scope-specific evidence. Language-only repository edits require a fresh validation entry below rather than reusing these historical results as a new test run.
 
-产品 API 不再支持示例模式，首页主按钮与侧栏共用空白草稿创建。确定性工作流测试执行器和 CSV 已移入 tests/fixtures，不再被服务器导入；HTTP smoke 仅测试项目生命周期，不再生成社区阅读项目。当前磁盘中社区阅读示例及其回收副本按 mode、标题和输入文件共同确认后清除，真实项目与回收副本保留。项目菜单使用 document.body Portal 的 fixed 浮层，按视口空间选择上下展开，替代末项强制向上规则。
+## English repository language pass
 
-## 自定义接口消息角色兼容修复
+All 34 repository Markdown files are English, including role prompts and technical/artistic Skills. Source comments were audited using TypeScript comment ranges; no CJK comments remain. Both .env.example and existing local .env comments were checked, with configuration assignments and secrets preserved. Localized UI strings, test data, source quotations and runtime protocol literals remain unchanged. AGENTS.md records the English-language convention for subsequent work.
 
-已确认 Pi 的 OpenAI Completions 适配在模型 reasoning=true 且 supportsDeveloperRole=true 时使用 developer 传递系统指令。此前自定义连接未声明此能力，未知代理 URL 的自动判断与实际服务不一致，导致 HTTP 400。现在以 Pi 公开 compat.supportsDeveloperRole 参数默认关闭此角色，使用 system；保留推理能力。设置项 DREAMATIC_SUPPORTS_DEVELOPER_ROLE 可显式启用，原生提供商保持自身适配。真实 Pi 会话针对拒绝 developer 的本地 HTTP 服务完成提交，断言推理模型仍为 reasoning=true 且请求包含 system、不包含 developer；未调用外部用户模型。
+Verification after the language edits: 144/144 tests passed in 29.435 seconds; npm run check, production build and git diff --check passed. Local Markdown links have no missing targets. No live external model/image service was used to evaluate the translated prompts; prompt-content changes participate in the existing role-contract fingerprints.
 
-## 配置接通专项检查
+## Supporting-panel visual consistency fix
 
-逐项核对四模块共 58 个字段与实际运行消费者，修复 Skill 路径失效判断、图像端点缓存、PDF 超时与指定路径、搜索返回条数、动态限制报错以及 Vite/后端环境优先级。新增 12 项配置行为测试，完整 42 项测试、严格类型检查和生产构建全部通过。字段映射与生效范围详见 [配置检查记录](CONFIGURATION_AUDIT.md)。本轮浏览器自动化在 Work 设置中被禁用，未重复执行界面验收；未进行外部 LLM 或图像生成请求。
+The composition disclosure and delivery performance disclosure incorrectly reused dw-supporting-facts, a section class that only supplied a top margin. Native details/summary and definition-list rendering therefore lacked the workbench's typography, spacing and hierarchy. Both now use SupportingPanel with shared tokens, a compact title/metadata row, explicit chevron/focus behavior and responsive key/value layouts. Composition follows the workbench header. PerformancePanel labels known stage/wait categories and retains the same measurement values.
 
-## Art 对话设计对齐
+TypeScript check, production build and git diff --check passed. Eight relevant narrative/conversation tests passed. A temporary isolated Chromium component preview verified expanded desktop (1100px) and mobile (390px) layouts, no horizontal overflow and Enter-key disclosure; screenshots were visually reviewed. No user project or provider was invoked. This verifies the two panel components, not a complete live-project browser run.
 
-对照 Art AgentPanel、RunStatus、CompletionSummary 与样式实现对话气泡、阶段折叠卡片、分组执行记录、正式阶段结果、需求确认、完成摘要与固定输入区。Enter 发送、Shift + Enter 换行，并处理中文组合输入；运行中发送位置提供暂停入口。新增 4 项对话测试，补充正式结果一致性与失效阶段隐藏断言，完整 46 项测试、严格类型检查和生产构建通过。详见 [调查、方案与实施记录](CONVERSATION_DESIGN.md)。浏览器访问被 Work 设置禁用，桌面/窄屏视觉及点击交互尚未实测；未调用外部模型。
+## Missing-results investigation and retained report access
 
-## Markdown 正式交接改造
+Read-only inspection of both live projects reproduced empty downstream result views, without browser rendering exceptions. Current stage pointers had been invalidated during reruns while canonical reports remained on disk. Role-prompt edits participate in fingerprints and can invalidate prior stages on continuation; stylesheet edits do not explain those absent pointers.
 
-新增 10 项协议与真实 Pi 本地会话测试，完整套件 56 项通过：五阶段文档无损解析、证据/数值序列/布局/映射保留、表格转义、非法字段与数值拒绝、正文改变触发失效、当前协议强制校验与恢复、文档修正、重复失败停止、非 Markdown 参数提前拒绝计入预算、按需文档读取与 HTML 分离提交。测试数据统一采用完整 Markdown 文档契约。
+Project detail now identifies retained canonical reports without current version pointers. A restricted, project-scoped, plain-text retained-document route provides explicit snapshot warnings and never supplies those reports to workflow inputs. The workbench explains regeneration and links preserved reports. Actual retained research/facts endpoints returned 200. TypeScript/build/diff checks passed; 16 relevant UI/protocol/project tests passed, followed by a protocol regression assertion verifying retained discovery after invalidation. Development backend reload interrupted active runs and persisted interrupted state; no report content was deleted or automatic model continuation requested.
 
-最后新增两个 Settings/.env 提交预算字段，并把文档终止错误与网络重试明确区分；相关协议、配置和对话 21 项测试再次通过，严格类型检查和生产构建再次通过。新增配置与 `.env.example` 全量一致性已覆盖；当前共 60 项设置。
+## Builder render diagnostics regression
 
-CSV/Excel 可读副本改为带原始行号的 Markdown 表格，原始文件保留。运行状态和内部索引由程序维护；不要求模型提交业务 JSON。详见 [Markdown 协议](MARKDOWN_PROTOCOL.md)。未调用用户外部模型；没有将本地确定性服务验证当作真实生成质量验收。
-
-
-## 清除旧项目兼容
-
-依据用户确认不需要旧项目兼容，删除旧报告渲染器、旧产物只读转换、旧指纹分支、可选 Markdown 提交回退、data/notes 编辑接口、项目根目录报告 JSON 副本与下载、旧配置 JSON/环境变量别名迁移，以及未使用的 setModels 入口。所有阶段只接受当前 Markdown 协议，缺少协议或原文直接拒绝；内部 artifact.json 和任务状态继续由程序维护。
-
-完整 56 项测试、TypeScript 检查与生产构建通过。覆盖当前协议往返、原文强制提交、文档改变触发下游失效、无报告 JSON 副本、恢复、项目管理、配置、真实 Pi 本地会话与 Chromium PDF。未调用用户外部模型，未删除运行目录或用户资料。
-
-## Researcher 中间成果
-
-补齐 Markdown 搜索计划/任务队列、正文提取及无效页面拒绝、项目范围缓存/请求预算/并发去重，以及未完成报告前的来源展示与纯文本下载。完整 63 项测试、类型检查和生产构建通过。新增 7 项测试覆盖计划、正文识别、并发、跨重试、错误预算、来源完整性、无效来源拒绝、组件渲染和 HTTP 接口。当前设置共 63 项。浏览器因 Work 设置禁用未做视觉实测，未调用用户外部模型；详见 RESEARCH_WORKBENCH.md。
-
-## 开源网页阅读器
-
-接入 Readability、JSDOM、Turndown/GFM 和 tough-cookie，复用隔离 Playwright。完整 70 项测试通过，包括 Cookie 会话跳转、循环识别、逐跳公共地址限制、Markdown 结构、浏览器动态内容、资源限额和取消清理；类型检查与生产构建通过。用户给定 IDF 资源页真实读取成功（约 751 字符正文、3 个链路节点），没有调用外部模型或读取个人浏览器状态。新增 7 个阅读器设置，目前共 70 项；字段与 .env.example 全量一致。详见 WEB_READER.md。
-
-## 2026-10-31 网页失败复核
-
-76 项完整回归通过；相关 19 项覆盖官方 BioC 编号/全文检查、摘要标记、真实 Chromium HTTPS CONNECT 与 Cookie 跳转、跨跳转私网阻断、动态正文及限额。类型检查和生产构建通过。线上三篇 PMC 全文、PubMed 摘要及 IDF 页面可读；一篇 PMC 无开放接口匹配记录，MDPI/Wiley/Lancet 仍受访问或安全验证限制，未宣称全部修复。详情及实际字数见 WEB_READER.md。无外部模型验证、无个人浏览器数据、无用户项目重跑。
-
-## 阶段启动次数与中断显示修正
-
-阶段“第 N 次尝试”改为“第 N 次启动”，附累计计数含义；自动网络重试单独标示。服务停止与用户暂停分别记录，恢复清除旧阶段错误。78 项完整测试、类型检查和生产构建通过，新增覆盖启动次数呈现、两种中断原因及恢复后的错误清理；未调用外部模型。
-
-## Analyst 引文、反馈与草稿修复
-
-84 项完整回归通过，新增覆盖表格证据、非法关联类型与来源别名聚合反馈、错误草稿保存、局部追加/修复、版本冲突、来源/需求变化失效及稳定纠错预算。真实 Pi + 本地确定性模型服务验证读取证据、保存错误草稿、局部修正、按版本提交及新会话恢复。没有调用外部模型或主动重跑用户项目；详见 ANALYST_WORKBENCH.md。
-
-## 数据事实 Tab 草稿进展
-
-90 项全量回归通过。新增覆盖只读草稿 API、按版本下载、局部修正刷新、暂停保留、格式错误展示、来源变化失效、正式成果切换、未校验枚举的安全渲染和不可信文本转义。隔离浏览器实测筛选和修正后的实时轮询更新，复核宽屏/窄屏截图，无页面脚本错误。类型检查与生产构建通过。没有运行外部模型或修改用户项目成果。
-
-## 十类事实及来源计算
-
-99 项完整回归、类型检查、生产构建通过。覆盖十类事实协议及独立依据方式、来源读取和可复算记录、篡改/错配拒绝、并列排名、IQR/零 IQR、Pearson 配对、分箱边界、单列类别与 CSV 引号、有效时间、百分点及图表单位；真实 Pi + 本地模型服务会拒绝模型自填来源数值并重建计算记录。外部模型新协议遵循能力未实测。详见 DATA_FACT_TYPES.md。
-
-## Markdown 分隔线与事实草稿展示修复（2026-10-31）
-
-事实条目之间的独立 `---` 被误判为前一条事实统计口径中的表格外正文，导致整份草稿没有卡片。解析器现在接受独立的连续 `---`、`***`、`___` 排版分隔线，原始 Markdown、表格单元格和列表内容不变。普通正文、表格格式及业务证据仍正常校验，不改变协议版本或项目输入范围。
-
-新增文档往返与草稿恢复回归测试，确认分隔线不会隐藏卡片，真实的引文错误仍归属对应事实并阻止正式提交。严格类型检查、101 项测试和生产构建通过。只读核验当前项目及运行中详情 API，19 条事实可解析，9 条通过、10 条待修正，无全局结构问题；没有重写用户草稿、自动恢复暂停任务或调用外部模型。
-
-## Analyst 修复持续性与指标校验（2026-10-31）
-
-修正 correlation 对关联指标的校验：按明确单位区分 r/ρ/τ 与文献 OR/RR/HR，不再将 OR=2.86 当作越界相关系数。数值仍要求有限；系数范围为 [-1,1]，比值非负，未知单位拒绝，来源证据和确定性计算记录校验保持。ARR（绝对风险降低）不作为 aRR 自动识别，调整后的 RR 可明确填写 adjusted RR 或在 RR 的方法字段说明。
-
-草稿的普通预检问题在 Pi 工具层返回成功保存与 Markdown 待修报告；正式提交、草稿参数错误和草稿无进展分别计数。会话以当前草稿为基线，结构恢复、问题减少或通过事实增加，且保留已有事实及已通过条目时，重置连续失败窗口。变更错误引文、删除事实、回退通过条目及等量问题振荡不算进展。无进展时给出调整策略；仅在对应连续上限触发时停止，沿用现有 `.env` 配置，不修改阶段总时限。
-
-新增 9 项测试：指标范围与证据拒绝；超过五次修复、部分问题减少、结构恢复、振荡/删事实/回退保护、全通过后的正式提交提示；真实 Pi 本地服务实际完成 8 次仍有问题的局部修正、交替的 8 次无效正式提交和后续完成修正，确认进展清零及预检不报工具失败；验证重复停滞和工具参数保护独立生效。完整 110 项测试、严格类型检查和生产构建通过。没有主动运行用户项目或调用外部付费模型；实际外部模型是否遵循策略调整提示仍需真实运行观察。
-
-## Designer 工作台联动（2026-10-31）
-
-新增当前设计协议的整体编排依据、段落选材理由与组件段落映射；分批 Markdown 草稿、局部修正与排序、当前范围只读投影及正式提交边界接通 Pi 和工作台。完整 118 项测试、类型检查、生产构建通过。隔离 Chromium 验证段落—事实—证据—组件联动、轮询更新、事实 Tab 定位、窄屏和正式提交切换，无页面异常；未运行用户项目或调用外部模型。调查、计划、契约与验证限制见 [DESIGNER_WORKBENCH.md](DESIGNER_WORKBENCH.md)。
-
-## 组件局部修复、空引用列表与混合单位（2026-10-31）
-
-新增组件专用修正与局部读取，误用段落工具时明确提示正确工具；草稿与正式提交共用逐组件汇总校验，定位未知引用、实际/要求单位、段落归属及布局。编号列表单项“- 无”按空列表解释，混写拒绝，自由文本列表不变。混合单位序列不能绕过单轴/环图校验，Analyst 与事实卡片也提供对应保护，不自动修改数据或推断换算。
-
-完整 123 项测试、严格类型检查、生产构建通过；真实 Pi 使用本地确定性服务验证组件局部工具及参数失败预算，隔离浏览器验证“定位组件”、轮询不抢滚动和原有联动。只读复核用户草稿确认空标记误报消除，实际混合单位组件能逐一定位；未改写原 Markdown、未执行外部付费模型。详见 [Designer 工作台](DESIGNER_WORKBENCH.md)。
-
-补充验证：正式提交成功后在公开 tool_execution_end 事件结束 Pi 会话，并清除备用定时器，避免事件循环竞态导致多发一次模型请求；测试同时核对成功工具结果已写入会话记录。
-
-## 逻辑与叙事 UI 分层（2026-10-31）
-
-重组叙事编排、视觉方案与检查视图，压缩首屏状态和概况，证据按需打开抽屉；视觉组件按段落分组、参数收起，检查支持精确定位，按工作区宽度使用单双栏。完整 126 项测试、类型检查和构建通过，独立七段落/二十八组件浏览器场景覆盖首屏、键盘、焦点、轮询、窄屏和正式切换，无页面异常。未执行用户模型。设计记录见 [NARRATIVE_UI_DESIGN.md](NARRATIVE_UI_DESIGN.md)。
-
-
-## 2026-11-01 D3 专业可视化接入
-
-固定接入 D3 7.9.0 与类型 7.4.3。新增 7 项可视化测试；完整 133 项测试、TypeScript 严格检查和生产构建通过。覆盖 D3 负数/零值基线、时间间隔、重复/密集类别、完整原始明细与单位、占比 0/100%、无法可靠绘制时的提示、官方运行库许可/顺序/幂等及 CDN 拒绝。真实 Chromium 在生产 CSP 下使用内嵌 D3 画出三条准确宽度的条形，零网络请求并导出有效 PDF；已有五阶段/PDF 回归继续通过。原生 Pi 本地会话验证指南工具、HTML 保存及 Markdown 提交。
-
-生产浏览器用 tests/fixtures 的独立临时配置及资料检查十类事实、七个具备图表数据的 D3 图表、排名关注对象高亮、方向键读数、完整数据表、390px 实际图表边界；无页面错误。手机截图等待已有侧栏切换动画完成后拍摄。没有运行真实用户项目、读取相邻项目凭据或调用外部模型。复杂作品生成质量仍需真实提供商验收，未宣称任意生成 JavaScript 的数据绑定已被形式验证。详见 [D3 接入记录](D3_VISUALIZATION.md)。
+Builder `check_render` returns only errors, media reports and limitations. Screenshot
+Base64 stays in the internal render cache for Designer visual review and must never
+be serialized into Builder tool text. Three observed live Builder failures on
+2026-11-01 returned HTTP 400 immediately after render tool replies containing
+1.61–2.21 million characters; oversized screenshot text is the suspected trigger,
+not a confirmed provider-side diagnosis. `tests/render-diagnostics.test.ts` checks
+payload exclusion, retained repair diagnostics and the production tool boundary.
+This regression test does not establish real-provider recovery.

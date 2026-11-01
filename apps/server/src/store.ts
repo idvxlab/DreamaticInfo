@@ -1,3 +1,4 @@
+import { performanceSummary } from "./run-metrics.js";
 import { embedVisualizationRuntime } from "./visualization-runtime.js";
 import { readDesignProgress } from "./designer-workbench.js";
 import { readAnalysisProgress } from "./analyst-workbench.js";
@@ -236,6 +237,8 @@ export async function detail(p: Project): Promise<ProjectDetail> {
     ...p,
     ...data,
     stage_results,
+    retained_documents: (await readdir(projectDir(p.id))).filter(file => roles.some(role => file === `${names[role]}.md` && !p.state.stages[role].version)),
+    performance: await performanceSummary(projectDir(p.id)),
     research_progress: await readProgress(p),
     analysis_progress: await readAnalysisProgress(p, data.research, data.intent),
     design_progress: await readDesignProgress(p, data),

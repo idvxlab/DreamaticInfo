@@ -1,3 +1,4 @@
+import { structureIssues } from "../../../packages/shared/structure.js";
 import { designReferenceIssues } from "./design-validation.js";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -80,6 +81,8 @@ export function validateReferences(
       "Fact",
     );
     for (const f of d.facts) {
+      const structural = structureIssues(f);
+      if (structural.length) throw new Error(structural.join("；"));
       if (
         !f.source_ids.length ||
         !f.evidence.length ||
@@ -137,6 +140,11 @@ export function validateHtml(html: string, design?: Design, facts?: DataFacts) {
   }
   if (/@import\b|url\(\s*['"]?(?!data:|#)/i.test($("style").text()))
     throw new Error("Remote CSS resources prohibited");
+  for (const el of $('[style]')) if (/url\(\s*['"]?(?!data:|#)/i.test($(el).attr('style') ?? '')) throw new Error('Remote inline CSS resources prohibited');
+  if (design) {
+    for (const asset of design.assets) if (!$('[data-asset-id]').toArray().some(el => $(el).attr('data-asset-id') === asset.id)) throw new Error(`Missing asset or declared fallback ${asset.id}`);
+    for (const el of $('[data-asset-id]')) if (!design.assets.some(a => a.id === $(el).attr('data-asset-id'))) throw new Error('Unknown asset use');
+  }
   if (design)
     for (const c of design.components)
       if (

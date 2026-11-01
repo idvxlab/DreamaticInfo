@@ -48,7 +48,16 @@ export interface Research {
   }[];
   limitations: string[];
 }
+export interface Evidence { source_id: string; quote: string; location: string }
+export interface StructuralData {
+  events: { id: string; date: string; label: string; source_id: string; quote: string; location: string }[];
+  nodes: { id: string; label: string; source_id: string; quote: string; location: string }[];
+  edges: { from: string; to: string; label: string; source_id: string; quote: string; location: string }[];
+  observations: { id: string; x: number; y: number; source_id: string; quote: string; location: string }[];
+  x_variable: string; x_unit: string; y_variable: string; y_unit: string;
+}
 export interface Fact {
+  structure?: StructuralData;
   id: string;
   title: string;
   type:
@@ -61,7 +70,7 @@ export interface Fact {
     | "categorization"
     | "rank"
     | "extreme"
-    | "outlier";
+    | "outlier" | "timeline" | "process" | "hierarchy" | "scatter";
   derivation: "quoted" | "computed" | "inferred" | "forecast";
   specification: { scope: string; measure: string; breakdown: string; focus: string; method: string; series_unit: string; aggregation: "none" | "count" | "sum" | "mean" | "median" | "min" | "max" | "distinct_count"; distribution_kind: "none" | "categorical" | "numeric"; calculation_id: string | null };
   description: string;
@@ -91,7 +100,7 @@ export interface DataFacts {
   facts: Fact[];
 }
 export interface Design {
-  composition?: {
+  composition: {
     task: "statistical" | "comparison" | "temporal" | "process" | "hierarchy" | "spatial" | "relationships" | "explanation" | "guide";
     reading: "guided" | "exploratory" | "hybrid";
     medium: "poster" | "responsive" | "interactive" | "scrollytelling";
@@ -114,10 +123,10 @@ export interface Design {
   components: {
     id: string;
     type:
-      "heading" | "text" | "bar" | "line" | "donut" | "metric" | "illustration";
+      "heading" | "text" | "bar" | "line" | "donut" | "metric" | "illustration" | "timeline" | "process" | "hierarchy" | "scatter";
     parent_id: string | null;
     story_ids: string[];
-    asset_ids?: string[];
+    asset_ids: string[];
     fact_ids: string[];
     title: string;
     description: string;
@@ -129,7 +138,7 @@ export interface Design {
   assets: {
     id: string;
     purpose: string;
-    commission?: { semantics: "decorative" | "explanatory" | "data"; content_ids: string[]; placement: string; safe_regions: string; transparent: "required" | "optional" | "opaque"; crop: string; layering: string; factual_boundary: string; acceptance: string; fallback: string };
+    commission: { semantics: "decorative" | "explanatory" | "data"; content_ids: string[]; placement: string; safe_regions: string; transparent: "required" | "optional" | "opaque"; crop: string; layering: string; factual_boundary: string; acceptance: string; fallback: string };
     width: number;
     height: number;
     style: string;
@@ -188,6 +197,8 @@ export interface Project {
   state: TaskState;
 }
 export interface ProjectDetail extends Project {
+  retained_documents?: string[];
+  performance?: { wall_ms: number; first_preview_ms?: number; delivery_ms?: number; model_calls: number; repairs: number; stage_attempts: number; durations_ms: Record<string, number>; waiting_ms: Record<string, number> };
   stage_results?: Partial<Record<Role, { notes: string; summary: string }>>;
   intent?: Intent;
   research?: Research;

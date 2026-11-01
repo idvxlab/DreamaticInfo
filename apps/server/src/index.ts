@@ -272,6 +272,15 @@ app.post("/api/projects/:id/pdf", async (req, res) => {
   emit(p.id, "PDF 海报已导出");
   res.download(file, "dreamatic-info.pdf");
 });
+// Retained canonical reports are read-only historical material, never workflow inputs.
+app.get("/api/projects/:id/retained-document/:name", async (req, res) => {
+  const p = await get(req.params.id);
+  const allowed = ["intent.md", "research.md", "datafacts.md", "design.md", "delivery.md"];
+  if (!allowed.includes(req.params.name)) throw new Error("不支持的文档");
+  const file = await safePath(projectDir(p.id), req.params.name);
+  res.setHeader("Cache-Control", "no-store");
+  res.type("text").send("# Retained document snapshot\n\nThis saved report may predate the current requirements or role contract. It is not a valid input to the active workflow.\n\n" + await readFile(file, "utf8"));
+});
 app.get("/api/projects/:id/document/:name", async (req, res) => {
   const p = await get(req.params.id);
   const allowed = ["intent", "research", "datafacts", "design", "delivery"];

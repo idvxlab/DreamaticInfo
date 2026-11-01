@@ -8,3 +8,5 @@ Read docs/PROJECT_SPEC.md and docs/ARCHITECTURE.md for product contracts.
 - Keep source material and evidence traceable. Product example/demo execution is removed. Deterministic fixtures belong only under tests/ and must never be imported by the server or exposed as product projects.
 - Runtime project data belongs in ignored workspace/. Do not commit credentials or user material.
 - Run check, relevant tests and production build after meaningful changes. Record real-provider verification limits honestly.
+
+- Write source-code and configuration comments, repository Markdown documents, role prompts, and Skill instructions in English. Preserve localized product UI text, source quotations, test data, and protocol literals unless a task explicitly changes them.

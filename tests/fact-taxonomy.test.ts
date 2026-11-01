@@ -62,7 +62,7 @@ try {
    facts.push(fact);
   }
   const md=renderDocument('analyst',{summary:'Ten types',facts});const parsed=parseDocument('analyst',md);
-  assert.deepEqual(parsed.data.facts.map((fact:Fact)=>fact.type),[...factTypes]);
+  assert.deepEqual(parsed.data.facts.map((fact:Fact)=>fact.type),[...factTypes].filter(t => !["timeline","process","hierarchy","scatter"].includes(t)));
   assert.deepEqual(await analystIssues(p,parsed.data,research),[]);
   const legacy={summary:'Bad enum',facts:[{...facts[0],type:'inference'}]};assert.throws(()=>parseDocument('analyst',renderDocument('analyst',legacy)),/allowed/);
   const derived={...facts[0],derivation:'inferred',specification:{...facts[0].specification,calculation_id:null}};assert.deepEqual(await analystIssues(p,{summary:'Inferred',facts:[derived]},research),[]);

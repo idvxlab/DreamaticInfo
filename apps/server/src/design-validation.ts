@@ -5,6 +5,7 @@ import { hasMixedUnits } from "../../../packages/shared/units.js";
 export function designReferenceIssues(d: Design, facts: DataFacts): DesignIssue[] {
   const issues: DesignIssue[] = [], known = new Map(facts.facts.map(fact => [fact.id, fact]));
   const storyIds = new Set<string>(), componentIds = new Set<string>(), assetIds = new Set<string>();
+  for (const [field, value] of Object.entries(d.composition)) if (typeof value === "string" && !value.trim()) issues.push({ location: `整体设计／${field}`, message: "整体设计字段为空", fix: "给出可执行设计规则" });
   if (!d.narrative_rationale.trim()) issues.push({ location: "整体编排依据", message: "整体编排依据为空", fix: "说明叙事主线及展开顺序，不填写纯空白" });
   for (const story of d.storyline) {
     const add = (field: string, message: string, fix: string) => issues.push({ story: story.id, location: `段落 ${story.id}／${field}`, message, fix });
@@ -21,6 +22,8 @@ export function designReferenceIssues(d: Design, facts: DataFacts): DesignIssue[
     for (const id of c.fact_ids) if (!known.has(id)) add("事实编号列表", `未知事实 ${id}`, `用 patch_design_component 修正 ${c.id}；仅引用正式事实，空编号列表单独写无`);
     for (const id of c.story_ids) if (!storyIds.has(id)) add("段落编号列表", `未知段落 ${id}`, "填写现有故事线的段落编号，不填组件编号");
     if (c.fact_ids.length && (!c.story_ids.length || c.fact_ids.some(id => !d.storyline.some(story => c.story_ids.includes(story.id) && story.fact_ids.includes(id))))) add("段落与事实", "组件事实不属于所关联段落", "补齐段落编号列表，并使组件事实属于关联段落的事实集合");
+    const structural = ["timeline", "process", "hierarchy", "scatter"].includes(c.type);
+    if (structural && (c.fact_ids.length !== 1 || known.get(c.fact_ids[0])?.type !== c.type || c.mapping.label_field !== "structure" || c.mapping.value_field !== "structure" || c.mapping.unit !== "")) add("结构映射", "结构组件必须对应一个同类型事实，字段为 structure，单位留空", "不使用自由文本或插画绕过结构校验");
     const chart = ["bar", "line", "donut"].includes(c.type);
     if ((chart || c.type === "metric") && !c.fact_ids.length) add("数据映射", "图表或指标未引用事实", "引用正式事实编号；非数据内容应使用 heading/text 等组件");
     if (c.type === "metric" && c.mapping.value_field !== "value") add("数据映射", `指标数值字段实际为 ${c.mapping.value_field}`, "指标的数值字段须为 value");

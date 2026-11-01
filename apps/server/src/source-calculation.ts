@@ -76,3 +76,5 @@ export async function verifyCalculation(p: Project, fact: Fact, sources: Map<str
   if(spec.distribution_kind!==expectedDistribution)throw new Error("分布类别与计算方式不一致");
   if(fact.series.length!==fresh.result.series.length||fact.series.some((item,index)=>item.label!==fresh.result.series[index].label||!close(item.value,fresh.result.series[index].value)))throw new Error("事实数值序列必须与计算返回的序列一致，不得删除或改写观测值");
 }
+
+export { table as sourceTable, number as sourceNumber };

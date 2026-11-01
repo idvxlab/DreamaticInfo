@@ -31,7 +31,11 @@
               "categorization",
               "rank",
               "extreme",
-              "outlier"
+              "outlier",
+              "timeline",
+              "process",
+              "hierarchy",
+              "scatter"
             ]
           },
           "description": {
@@ -230,6 +234,191 @@
               "inferred",
               "forecast"
             ]
+          },
+          "structure": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "date": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "source_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "quote": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "location": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "date",
+                    "label",
+                    "source_id",
+                    "quote",
+                    "location"
+                  ]
+                }
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "source_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "quote": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "location": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "source_id",
+                    "quote",
+                    "location"
+                  ]
+                }
+              },
+              "edges": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "to": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "source_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "quote": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "location": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "to",
+                    "label",
+                    "source_id",
+                    "quote",
+                    "location"
+                  ]
+                }
+              },
+              "observations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "source_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "quote": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "location": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "y",
+                    "source_id",
+                    "quote",
+                    "location"
+                  ]
+                }
+              },
+              "x_variable": {
+                "type": "string"
+              },
+              "x_unit": {
+                "type": "string"
+              },
+              "y_variable": {
+                "type": "string"
+              },
+              "y_unit": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "events",
+              "nodes",
+              "edges",
+              "observations",
+              "x_variable",
+              "x_unit",
+              "y_variable",
+              "y_unit"
+            ]
           }
         },
         "required": [
@@ -249,6 +438,27 @@
           "series",
           "derivation",
           "specification"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "timeline",
+                    "process",
+                    "hierarchy",
+                    "scatter"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "structure"
+              ]
+            }
+          }
         ]
       },
       "minItems": 1

@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef } from "react";
 import { ChevronRight, X } from "lucide-react";
 import type { Design, DesignIssue, Fact } from "../../../packages/shared/types";
-const types = new Map([["heading", "标题"], ["text", "文字说明"], ["bar", "条形图"], ["line", "折线图"], ["donut", "环图"], ["metric", "核心指标"], ["illustration", "插画"]]);
+const types = new Map([["timeline", "时间线"], ["process", "流程"], ["hierarchy", "层级"], ["scatter", "散点"], ["heading", "标题"], ["text", "文字说明"], ["bar", "条形图"], ["line", "折线图"], ["donut", "环图"], ["metric", "核心指标"], ["illustration", "插画"]]);
 export function componentGroup(design: Design, component: Design["components"][number]) {
   const story = design.storyline.find(story => component.story_ids.includes(story.id));
   return story ? `story:${story.id}` : component.story_ids.length ? "unassigned" : "global";
