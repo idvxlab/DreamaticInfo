@@ -1,3 +1,4 @@
+import { cssResourceIssues } from "./css-resources.js";
 import { structureIssues } from "../../../packages/shared/structure.js";
 import { designReferenceIssues } from "./design-validation.js";
 import { readFileSync } from "node:fs";
@@ -115,16 +116,21 @@ export function validateReferences(
   if (role === "builder")
     validateHtml(data.html, upstream.design, upstream.datafacts);
 }
+export class HtmlValidationError extends Error {
+  constructor(readonly issues: string[]) { super(issues.join("\n")); }
+}
 export function validateHtml(html: string, design?: Design, facts?: DataFacts) {
   if (typeof html !== "string" || html.length < 200 || html.length > 15_000_000)
-    throw new Error("Invalid HTML size");
+    throw new HtmlValidationError(["Invalid HTML size"]);
+  const issues: string[] = [];
+  const add = (message: string) => { issues.push(message); };
   const $ = load(html);
   if (!$("title").text().trim() || !$("body").text().trim())
-    throw new Error("HTML needs a title and content");
+    add("HTML needs a title and content");
   if ($('iframe,object,embed,base,form,meta[http-equiv="refresh"]').length)
-    throw new Error("Unsupported embedded HTML");
+    add("Unsupported embedded HTML");
   if ($("script[src],link[href]").length)
-    throw new Error("External dependencies must be inlined");
+    add("External dependencies must be inlined");
   for (const el of $("[src],[srcset],[href],[poster]")) {
     const a = $(el).attr();
     for (const key of ["src", "srcset", "href", "poster"]) {
@@ -135,15 +141,15 @@ export function validateHtml(html: string, design?: Design, facts?: DataFacts) {
         !v.startsWith("data:") &&
         !(key === "href" && el.tagName === "a" && /^https?:\/\//.test(v))
       )
-        throw new Error("Resources must be embedded as data URLs");
+        add("Resources must be embedded as data URLs");
     }
   }
-  if (/@import\b|url\(\s*['"]?(?!data:|#)/i.test($("style").text()))
-    throw new Error("Remote CSS resources prohibited");
-  for (const el of $('[style]')) if (/url\(\s*['"]?(?!data:|#)/i.test($(el).attr('style') ?? '')) throw new Error('Remote inline CSS resources prohibited');
+  for (const el of $("style")) issues.push(...cssResourceIssues($(el).text()));
+  for (const el of $('[style]')) issues.push(...cssResourceIssues($(el).attr('style') ?? '', true));
   if (design) {
-    for (const asset of design.assets) if (!$('[data-asset-id]').toArray().some(el => $(el).attr('data-asset-id') === asset.id)) throw new Error(`Missing asset or declared fallback ${asset.id}`);
-    for (const el of $('[data-asset-id]')) if (!design.assets.some(a => a.id === $(el).attr('data-asset-id'))) throw new Error('Unknown asset use');
+    if ($("[data-unimplemented]").length) add("Final delivery contains unfinished sample regions");
+    for (const asset of design.assets) if (!$('[data-asset-id]').toArray().some(el => $(el).attr('data-asset-id') === asset.id)) add(`Missing asset or declared fallback ${asset.id}`);
+    for (const el of $('[data-asset-id]')) if (!design.assets.some(a => a.id === $(el).attr('data-asset-id'))) add('Unknown asset use');
   }
   if (design)
     for (const c of design.components)
@@ -152,13 +158,13 @@ export function validateHtml(html: string, design?: Design, facts?: DataFacts) {
           .toArray()
           .some((el) => $(el).attr("data-component-id") === c.id)
       )
-        throw new Error(`Missing design component ${c.id}`);
+        add(`Missing design component ${c.id}`);
+  // One chart may encode several official facts. Match complete ID tokens, never substrings.
+  const markedFacts = new Set($("[data-fact-id]").toArray().flatMap(el =>
+    ($(el).attr("data-fact-id") ?? "").trim().split(/\s+/).filter(Boolean)));
   if (design && facts)
     for (const id of new Set(design.components.flatMap((c) => c.fact_ids)))
-      if (
-        !$("[data-fact-id]")
-          .toArray()
-          .some((el) => $(el).attr("data-fact-id") === id)
-      )
-        throw new Error(`Missing fact ${id}`);
+      if (!markedFacts.has(id))
+        add(`Missing fact ${id}：请在对应内容元素的 data-fact-id 中标记该完整事实编号；多个编号用空格分隔。save_html 尚未接受，请修复后再次保存，再调用 check_render`);
+  if (issues.length) throw new HtmlValidationError([...new Set(issues)]);
 }

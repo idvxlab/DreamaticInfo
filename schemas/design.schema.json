@@ -321,6 +321,14 @@
               "acceptance",
               "fallback"
             ]
+          },
+          "implementation": {
+            "type": "string",
+            "enum": [
+              "css",
+              "svg",
+              "generated_image"
+            ]
           }
         },
         "required": [
@@ -330,7 +338,8 @@
           "height",
           "style",
           "prompt",
-          "commission"
+          "commission",
+          "implementation"
         ]
       }
     },
@@ -404,6 +413,34 @@
         "acceptance": {
           "type": "string",
           "minLength": 1
+        },
+        "core_message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "information_hierarchy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "primary_visual": {
+          "type": "string",
+          "minLength": 1
+        },
+        "typography": {
+          "type": "string",
+          "minLength": 1
+        },
+        "background_treatment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decoration_rules": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visual_acceptance": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -417,7 +454,14 @@
         "safe_regions",
         "responsive_rules",
         "print_rules",
-        "acceptance"
+        "acceptance",
+        "core_message",
+        "information_hierarchy",
+        "primary_visual",
+        "typography",
+        "background_treatment",
+        "decoration_rules",
+        "visual_acceptance"
       ]
     }
   },

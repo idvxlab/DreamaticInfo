@@ -1,5 +1,12 @@
 import type { Design } from "../../packages/shared/types.js";
 export const composition: Design["composition"] = {
+  core_message: "Fixture: compare the verified observations, not a population claim.",
+  information_hierarchy: "Primary: headline and main comparison; secondary: explanation; supporting: sources. Unselected facts remain in the workbench.",
+  primary_visual: "The main comparison is the focal graphic; no generated scene is needed for this statistical fixture.",
+  typography: "System sans-serif; heading 32px/700, values 28px/600, body 16px, sources 12px. Offline fallback is system sans-serif.",
+  background_treatment: "Flat neutral ground, clean data regions, no texture behind labels.",
+  decoration_rules: "Rules group related evidence; no decorative arrows that imply factual relationships.",
+  visual_acceptance: "Check headline dominance, associated labels, calm data regions and source legibility. This fixture does not prove aesthetic quality.",
   "task": "statistical",
   "reading": "guided",
   "medium": "responsive",

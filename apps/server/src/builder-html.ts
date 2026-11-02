@@ -4,6 +4,9 @@ import { load } from 'cheerio';
 export function authoredHtml(html: string) {
   const $ = load(html);
   $("script[data-dreamatic-runtime='d3']").remove();
+  for (const el of $('img[data-asset-id]')) {
+    if ($(el).attr('src')?.startsWith('data:')) $(el).removeAttr('src');
+  }
   return $.html();
 }
 

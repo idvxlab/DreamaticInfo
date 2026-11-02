@@ -2627,3 +2627,31 @@ textarea {
 .retained-results-notice p { margin: 4px 0 8px; color: var(--muted); }
 .retained-results-notice > div { display: flex; flex-wrap: wrap; gap: 8px 18px; }
 .retained-results-notice a { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+
+.visual-review-notice {
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.visual-review-notice p { margin: 8px 0; }
+.visual-review-notice ul { padding-left: 20px; }
+.visual-review-notice li + li { margin-top: 10px; }
+.completion-summary.needs-revision { border-color: var(--accent); background: var(--paper); }
+
+.work-progress { padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.work-progress-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+.work-progress-heading span { color: var(--muted); }
+.work-progress .dw-advanced { margin-top: 10px; padding-top: 10px; }
+.work-progress label { display: grid; gap: 6px; margin: 12px 0; }
+.work-progress textarea { box-sizing: border-box; width: 100%; min-height: 84px; resize: vertical; }
+.work-progress select { width: 100%; max-width: 260px; }
+
+.model-budget-summary { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.model-budget-summary p { margin: 0 0 8px; }
+.model-budget-summary small { display: block; margin-top: 6px; color: var(--muted); }

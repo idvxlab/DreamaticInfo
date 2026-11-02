@@ -4,11 +4,11 @@ import { schemas, names, validate } from "./validation.js";
 export const DOCUMENT_PROTOCOL = "infographic-markdown-2026";
 type Schema = { required?: string[]; type: string | string[]; minimum?: number; maximum?: number; properties?: Record<string, Schema>; items?: Schema; enum?: string[] };
 const labels: Record<string, string> = {
-  structure: "结构数据", events: "事件", date: "日期", nodes: "节点", edges: "结构连线", from: "起点", to: "终点", observations: "配对观测", x_variable: "横轴变量", x_unit: "横轴单位", y_variable: "纵轴变量", y_unit: "纵轴单位", composition: "整体设计", task: "内容任务", reading: "阅读方式", medium: "交付形式", selection_basis: "选型依据", communication: "内容与传播", art_direction: "艺术方向", layout_rules: "构图关系", safe_regions: "安全区域", responsive_rules: "媒介适配", print_rules: "打印方案", acceptance: "验收要求", commission: "素材委托", semantics: "语义类别", content_ids: "关联内容编号", placement: "主体位置", transparent: "透明要求", crop: "定位裁切", layering: "层叠规则", factual_boundary: "事实边界", fallback: "失败替代", asset_ids: "素材编号列表",
+  structure: "结构数据", events: "事件", date: "日期", nodes: "节点", edges: "结构连线", from: "起点", to: "终点", observations: "配对观测", x_variable: "横轴变量", x_unit: "横轴单位", y_variable: "纵轴变量", y_unit: "纵轴单位", composition: "整体设计", core_message: "核心信息", information_hierarchy: "信息层级", primary_visual: "主题视觉", typography: "字体系统", background_treatment: "背景系统", decoration_rules: "装饰系统", visual_acceptance: "视觉自检", task: "内容任务", reading: "阅读方式", medium: "交付形式", selection_basis: "选型依据", communication: "内容与传播", art_direction: "艺术方向", layout_rules: "构图关系", safe_regions: "安全区域", responsive_rules: "媒介适配", print_rules: "打印方案", acceptance: "验收要求", commission: "素材委托", semantics: "语义类别", content_ids: "关联内容编号", placement: "主体位置", transparent: "透明要求", crop: "定位裁切", layering: "层叠规则", factual_boundary: "事实边界", fallback: "失败替代", asset_ids: "素材编号列表",
   narrative_rationale: "整体编排依据", rationale: "选材与顺序理由", story_ids: "段落编号列表",
   series_unit: "序列单位", derivation: "依据方式", specification: "统计口径", measure: "度量字段", breakdown: "分组字段", focus: "关注对象", method: "方法", aggregation: "聚合方法", distribution_kind: "分布类别", calculation_id: "计算记录编号",
   intent: "需求报告", research: "调研报告", datafacts: "数据事实报告", design: "逻辑与叙事设计",
-  title: "标题", topic: "主题", objective: "项目目标", audience: "目标受众", scope: "内容范围", data_requirements: "数据要求", story_direction: "叙事方向", visual_preferences: "视觉偏好", constraints: "约束", summary: "概要", sources: "来源", datasets: "数据集", limitations: "局限", id: "编号", url: "链接", published_at: "发布日期", accessed_at: "采集日期", kind: "来源类型", path: "文件路径", fields: "字段", source_id: "来源编号", description: "描述", facts: "数据事实", type: "类型", value: "数值", unit: "单位", evidence: "证据", quote: "原文", location: "位置", analysis: "分析", context: "上下文", source_ids: "来源编号列表", importance: "重要程度", relations: "关联", target_id: "目标事实编号", basis: "依据", confidence: "可信度", score: "分数", reason: "理由", series: "数值序列", label: "标签", theme: "主题", storyline: "故事线", fact_ids: "事实编号列表", page: "页面", width: "宽度", height: "高度", background: "背景", palette: "色板", font: "字体", components: "组件", parent_id: "父组件编号", layout: "布局", x: "横坐标", y: "纵坐标", mapping: "数据映射", label_field: "标签字段", value_field: "数值字段", interaction: "交互", animation: "动画", trigger: "触发", behavior: "行为", assets: "素材", purpose: "用途", style: "风格", prompt: "生成描述",
+  visual_constraints: "视觉约束来源", requirement: "要求", origin: "来源类别", basis: "依据", title: "标题", topic: "主题", objective: "项目目标", audience: "目标受众", scope: "内容范围", data_requirements: "数据要求", story_direction: "叙事方向", visual_preferences: "视觉偏好", constraints: "约束", summary: "概要", sources: "来源", datasets: "数据集", limitations: "局限", id: "编号", url: "链接", published_at: "发布日期", accessed_at: "采集日期", kind: "来源类型", path: "文件路径", fields: "字段", source_id: "来源编号", description: "描述", facts: "数据事实", type: "类型", value: "数值", unit: "单位", evidence: "证据", quote: "原文", location: "位置", analysis: "分析", context: "上下文", source_ids: "来源编号列表", importance: "重要程度", relations: "关联", target_id: "目标事实编号",  confidence: "可信度", score: "分数", reason: "理由", series: "数值序列", label: "标签", theme: "主题", storyline: "故事线", fact_ids: "事实编号列表", page: "页面", width: "宽度", height: "高度", background: "背景", palette: "色板", font: "字体", components: "组件", parent_id: "父组件编号", layout: "布局", x: "横坐标", y: "纵坐标", mapping: "数据映射", label_field: "标签字段", value_field: "数值字段", interaction: "交互", animation: "动画", trigger: "触发", behavior: "行为", assets: "素材", implementation: "实现方式", purpose: "用途", style: "风格", prompt: "生成描述",
 };
 const label = (key: string) => labels[key] || key;
 const scalar = (s: Schema) => s.type !== "object" && s.type !== "array";
@@ -51,6 +51,27 @@ function renderNode(data: any, schema: Schema, depth: number): string {
 export function renderDocument(role: Role, data: any, notes = "") {
   const body = role === "builder" ? { summary: data.summary } : data;
   return `# ${role === "builder" ? "交付说明" : label(names[role])}\n\n${renderNode(body, schemaFor(role), 2)}## 说明\n\n${notes}\n`;
+}
+// Computed narratives reuse the Markdown grammar but omit server-owned numeric fields.
+function computedNarrativeSchema(): Schema {
+  const fact = (schemas.datafacts as any).properties.facts.items.properties;
+  return { type: "object", properties: {
+    summary: { type: "string" },
+    facts: { type: "array", items: { type: "object", properties: {
+      ...Object.fromEntries(["id", "title", "type", "description", "analysis", "context", "importance", "confidence", "relations"].map(key => [key, fact[key]])),
+      calculation_id: { type: "string" },
+    } } },
+  } };
+}
+export function computedNarrativeTemplate() {
+  const schema = computedNarrativeSchema();
+  return `# 计算事实叙述\n\n${renderNode(sample(schema), schema, 2)}`;
+}
+export function parseComputedNarratives(markdown: string) {
+  if (!markdown.trim() || markdown.length > 200_000 || /^\s*```/m.test(markdown)) throw new Error("计算事实叙述需直接提供 Markdown，且不超过 200KB");
+  const data = readNode(sections(markdown), computedNarrativeSchema(), "文档");
+  if (data.facts.length < 1 || data.facts.length > 3) throw new Error("每批保存 1–3 条计算事实，先保存已有结论再继续分析");
+  return data;
 }
 interface Section { title: string; lines: string[]; children: Section[] }
 function sections(markdown: string): Section {
@@ -100,7 +121,7 @@ function readNode(node: Section, schema: Schema, where: string): any {
   if (lines.length === 1 && lines[0] === "无" && !node.children.length) return [];
   const item = schema.items!;
   if (scalar(item)) {
-    const referenceList = /(?:^|\/)(?:fact_ids|事实编号列表|story_ids|段落编号列表|source_ids|来源编号列表)$/.test(where);
+    const referenceList = /(?:^|\/)(?:fact_ids|事实编号列表|story_ids|段落编号列表|source_ids|来源编号列表|asset_ids|素材编号列表|content_ids|关联内容编号)$/.test(where);
     if (referenceList && !node.children.length && lines.length === 1 && lines[0] === "- 无") return [];
     if (referenceList && lines.includes("- 无")) throw new Error(`${where}：“无”不能与真实编号混写；空列表单独写无，否则只填写真实编号`);
     if (node.children.length || !lines.length || lines.some(line => !line.startsWith("- "))) throw new Error(`${where}：填写 Markdown 列表，空列表写“无”`);
@@ -144,6 +165,11 @@ function constraints(schema: Schema, trail = "文档"): string[] {
     ...(schema.enum ? [`- ${trail}：${schema.enum.join("、")}`] : []),
     ...(schema.minimum !== undefined || schema.maximum !== undefined ? [`- ${trail}：数值范围 ${schema.minimum ?? "不限"} 至 ${schema.maximum ?? "不限"}`] : []),
   ];
+}
+/** Official API schemas and JSON object keys supply explicit table headers. */
+export function renderObservationTable(rows: unknown[][]) {
+  if(!rows.length || !rows[0].length || rows.some(row=>row.length!==rows[0].length))throw new Error("观测表必须有完整、等宽的表头和数据行");
+  return table(rows[0].map(value=>cell(value,{type:"string"})),rows.slice(1).map(row=>row.map(value=>cell(value ?? "",{type:"string"}))));
 }
 export function renderDataTable(rows: unknown[][]) {
   const width = rows.reduce((max, row) => Math.max(max, row.length), 0);

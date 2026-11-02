@@ -3,6 +3,7 @@ import { setting } from "./config-store.js";
 import { DocumentSubmissionError } from "./submission-policy.js";
 
 export interface RepairSnapshot {
+  phase?: number;
   parsed: boolean;
   factIds: string[];
   verified: string[];
@@ -18,15 +19,17 @@ export class AnalysisRepairPolicy {
   private bestIssues = Infinity;
   private parsed = false;
   private initialized = false;
+  private phase = 0;
   private stalled = 0;
   private repeated = new Map<string, number>();
   pending = false;
   fatal: Error | undefined;
 
-  constructor(initial?: RepairSnapshot, private subject = "分析草稿", private item = "事实") { if (initial) this.remember(initial); }
+  constructor(initial?: RepairSnapshot, private subject = "分析草稿", private item = "事实", private guidance = "重新定位原始证据块、核对指标单位，优先处理其他待修问题；不要重复同一引文、删除事实或覆盖已通过条目。") { if (initial) this.remember(initial); }
 
   private remember(state: RepairSnapshot) {
     this.initialized = true;
+    this.phase = Math.max(this.phase, state.phase ?? 0);
     this.parsed ||= state.parsed;
     state.factIds.forEach(id => this.facts.add(id));
     state.verified.forEach(id => this.verified.add(id));
@@ -39,6 +42,7 @@ export class AnalysisRepairPolicy {
     const preserved = [...this.facts].every(id => state.factIds.includes(id)) && [...this.verified].every(id => state.verified.includes(id));
     const progress = !this.initialized || preserved && (
       state.parsed && !this.parsed ||
+      (state.phase ?? 0) > this.phase ||
       state.verified.some(id => !this.verified.has(id)) ||
       state.parsed && state.issues.length < this.bestIssues
     );
@@ -55,7 +59,7 @@ export class AnalysisRepairPolicy {
       const count = (this.repeated.get(key) ?? 0) + 1;
       this.repeated.set(key, count);
       if (count >= this.repeatedLimit || this.stalled >= this.stalledLimit) {
-        this.fatal = new DocumentSubmissionError(`阶段已停止：${this.subject}连续无进展（${this.stalled} 次），已有草稿已保存。请核对证据定位、统计指标或工具参数后继续；这不是累计修复次数限制。`);
+        this.fatal = new DocumentSubmissionError(`阶段已停止：${this.subject}连续无进展（${this.stalled} 次），已有草稿已保存。${this.guidance} 这不是累计修复次数限制。`);
       }
     }
     // Regressions must not lower the bar for the next attempt.
@@ -70,7 +74,7 @@ export class AnalysisRepairPolicy {
       progress,
       message: progress
         ? `修复进展已保存：${state.verified.length} 条${this.item}通过，剩余 ${state.issues.length} 项问题；继续局部修正。`
-        : `草稿已保存，本次未超过此前最佳校验结果（连续 ${this.stalled} 次）。请调整修复策略：重新定位原始证据块、核对指标单位，优先处理其他待修问题；不要重复同一引文、删除事实或覆盖已通过条目。`,
+        : `草稿已保存，本次未超过此前最佳校验结果（连续 ${this.stalled} 次）。请调整修复策略：${this.guidance}`,
     };
   }
 }

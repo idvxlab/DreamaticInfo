@@ -62,3 +62,108 @@ Designer visual review submits a separate Markdown table with ID, owner, compone
 ## Verification boundary
 
 Local deterministic providers and temporary projects verify parsing/escaping, evidence, values, drafts, failure limits, recovery, source reads and independent HTML submission. They do not prove live-model template adherence, artistic quality or latency. See VALIDATION.md.
+
+The composition table additionally requires core_message (核心信息),
+information_hierarchy (信息层级), primary_visual (主题视觉), typography (字体系统),
+background_treatment (背景系统), decoration_rules (装饰系统) and
+visual_acceptance (视觉自检). They are executable free-text design decisions;
+missing fields are rejected, never inferred from an older design. Empty asset
+lists remain valid. See VISUAL_DESIGN.md for responsibilities and review limits.
+
+All ID reference lists, including asset_ids and commission.content_ids, accept a
+standalone none marker or a single bullet containing that marker. Mixed markers
+and real IDs are rejected. Free-text lists retain their literal values. Asset
+commission.content_ids contains fact IDs, not component IDs; component.asset_ids
+expresses placement/use, and placement prose specifies anchors and cropping.
+
+HTML fact traceability markers accept one complete fact ID or whitespace-separated
+complete IDs in data-fact-id for multi-fact components. Validation reads static
+markup without executing scripts; JavaScript source strings do not establish
+coverage. Only facts selected by official components are required. Substring and
+comma-separated matches are not accepted. save_html rejection does not stage HTML.
+
+For ready commissioned images Builder writes an img with data-asset-id and alt
+text. The server embeds its official data URL during HTML staging. generate_image
+returns status/metadata only, never Base64 text. Generated-image bytes are omitted
+from output/index.html model reads and restored by staging; unmarked author images
+are not stripped. Failed commissions still require their designed fallback marker.
+
+Visual review retains the four-column issue table. Its separator row may be
+omitted, but no data row may be discarded. Asset IDs resolve to the component
+using them. On subsequent reviews, list closed previous IDs as `- ID` under
+`## 已解决`, omitting that section when empty. Under `## 待修问题`, provide the
+remaining table or the existing no-issues literal. Every previously open issue
+must be explicitly closed or retained with its ID; closed IDs cannot be recycled.
+No second model-authored JSON review is introduced; the ledger is compiled state.
+
+## Constraint origin and implementation decisions
+
+Intent requires visual_constraints records: requirement, origin
+(user/reference/brand/default), and basis. No reader invents a missing origin.
+Defaults remain revisable. Design asset implementation is css/svg/generated_image,
+independent of commission.semantics. Existing component.asset_ids and commission
+placement/crop/layering/safe_regions form the usage contract. There is no parallel
+model-authored asset report. Source-image issue targets should use the asset ID;
+component presentation issues should use component IDs. Compiled issues retain
+concept/asset/implementation/data categories alongside owner and stable ID.
+
+Builder's save_visual_sample accepts real HTML and completed_components. Every
+other official region has a visible data-unimplemented=ID label. It is a milestone,
+not a formal delivery: no fabricated filler, completed heading and representative
+fact region, offline code, real fonts/background/assets. Final HTML rejects all
+unfinished markers and retains full component/fact/resource checks.
+
+## Source-first research protocol
+
+Search-plan target cells use exact connector IDs: pubmed, kaggle, worldbank, who,
+eurostat, unsdg, zenodo, nbs, web. Same keywords on different connectors are
+separate tasks. Before submission, `save_research_coverage` accepts a Markdown
+table with localized headers `任务 | 来源编号 | 缺口说明`. Each planned task binds
+actual current source IDs (comma separated) and `无` for complete coverage,
+source IDs plus a remaining gap for partial coverage, or `无` for sources and
+a specific gap of at least ten characters for missing coverage. Empty upload-only queues
+need no coverage rows. These records are authored Markdown, compiled into internal
+progress, never a second model-authored JSON report.
+
+Source catalog metadata is not dataset evidence. Dataset paths must equal the
+associated normalized source path; network datasets require a registered acquisition
+receipt with intact raw/catalog/material digests. Reports preserve registered
+acquisition source metadata and limitations. Numbered spreadsheet calculations may
+explicitly set `first_row_header=true`; receipts retain that transformation and
+recomputation validates every remaining observation.
+
+
+## Research narrative composition
+
+compose_research_report accepts Markdown with 概要 prose, 采用来源 source-ID bullet
+list, 局限 bullet list (or 无), and optional 说明 notes. It inserts server-owned
+registered source metadata and dataset records into the formal research.md schema,
+merges saved gaps and source limitations, and saves an immutable draft revision.
+Researcher submits that draft_revision without retranscribing metadata. Input and
+content fingerprints plus source integrity are checked again on submission.
+Manual formal Markdown remains supported for explicit artifact editing; no second
+model-authored business report is introduced.
+
+Supplemental search associations are explicit related_task_ids. Candidate IDs
+are deterministic server-owned references, not model-authored observations.
+
+Grouped source trend results return one existing calculation Markdown report per
+observed group. calculation_id remains scalar per fact. Each grouped fact copies
+its receipt selection_scope into specification.scope alongside the E- evidence
+block ID; group keys and sorting are recorded in server-owned calculation receipts,
+not a second model-authored artifact. Separate groups are separate facts/series.
+
+Computed Analyst narratives may be appended using save_computed_facts: the small
+Markdown input contains a summary and 1–3 facts with ID, title, type, description,
+analysis, context, importance, confidence, relationships and calculation_id. The
+server inserts verified receipt fields and real evidence into the same canonical
+Analyst Markdown, rather than asking the model to copy numbers and entire series.
+The standard complete report protocol and final validation remain unchanged.
+
+Builder HTML validation returns aggregate resource, component and fact-marker
+issues separately from Markdown handoff validation. save_html persists rejected
+bounded content as an input-scoped repair draft. read_html_draft restores it;
+patch_html repairs it without requiring an existing formal output file. A newer
+rejected edit clears the accepted delivery slot. No rejected HTML can bypass
+actual sample, render, resource or factual checks at formal submission. Progress
+and repeated failure signatures exclude changing revision IDs.

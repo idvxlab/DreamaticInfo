@@ -60,3 +60,25 @@ No runtime directory was deleted. The actual root was verified read-only as `/Us
 | Old-cache cleanup | 144/144 | 29.076 s |
 
 check, production build and diff checks passed. Counts/coverage changed, so these are not end-to-end speed comparisons. Browser regression includes desktop/mobile/print, offline D3 and valid PDF. Real provider quality/performance is unverified. See [Implementation](INFOGRAPHIC_IMPLEMENTATION.md) and [Validation](VALIDATION.md).
+
+## Editorial visual workflow revision
+
+Implemented the seven required editorial/visual decisions across schema, shared
+types, Markdown and workbench; explicit selection/concept/composition/self-review
+instructions; subject-specific technical Skill guidance; Builder fidelity and
+font/fallback responsibilities; dual adequacy/fidelity screenshot-review criteria;
+derived asset fallback disclosure; and visible invalidation notices. Existing
+asset queue, scoped HTML repair, immutable versions, cancellation and repair
+budgets are reused. A mandatory real-code sample milestone is now connected to the existing Designer reviewer and shared repair budget. No fixed style,
+image count or automated beauty gate is introduced. See VISUAL_DESIGN.md.
+
+## Completion of the remaining visual workflow contracts
+
+Explicit intent provenance and execution operations now precede the existing
+Designer contract. CSS/SVG/image routing, image technical inspection and versioned
+SVG embedding feed a real-code sample gate. Designer findings deterministically
+route formal revision before full Builder submission. Shared counts and reported
+cost survive recovery. Workbench state and saved version differences expose these
+results without replacing the geometry schematic with a fictional preview.
+Actual provider attempts are recorded as failures/limits in VALIDATION.md; a
+successful artistic before/after comparison remains an acceptance limitation.

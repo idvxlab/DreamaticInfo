@@ -49,7 +49,7 @@ try {
     assert.ok(!retained?.includes("intent.md"));
   });
   await test("Markdown table escaping preserves pipes, quotes, HTML, line breaks, empty strings and numeric text", () => {
-    const data = { title: 'A | B <br> &amp; `quote`', topic: "first\nsecond\r", objective: " \t\\| original \t", audience: "", scope: "### Not a heading", data_requirements: "<script>data</script>", story_direction: "A &#10; B", visual_preferences: "未提供", constraints: ["", "A | B", "C\nD"] };
+    const data = { title: 'A | B <br> &amp; `quote`', topic: "first\nsecond\r", objective: " \t\\| original \t", audience: "", scope: "### Not a heading", data_requirements: "<script>data</script>", story_direction: "A &#10; B", visual_constraints: [], visual_preferences: "未提供", constraints: ["", "A | B", "C\nD"] };
     const text = renderDocument("chatbot", data, "### Explanation\n\n- Keep this narrative.\n\n```text\nExample\n```");
     assert.deepEqual(parseDocument("chatbot", text).data, data);
     assert.match(parseDocument("chatbot", text).notes, /### Explanation/);
@@ -123,7 +123,7 @@ try {
   });
   await test("only current Markdown artifacts are accepted and narrative changes invalidate downstream", async () => {
     const p = await store.create("Markdown storage", "live"), models = await getModels();
-    const intent = { title: "Markdown", topic: "Test", objective: "Objective", audience: "Public", scope: "Test", data_requirements: "CSV", story_direction: "Test", visual_preferences: "Neutral", constraints: [] };
+    const intent = { title: "Markdown", topic: "Test", objective: "Objective", audience: "Public", scope: "Test", data_requirements: "CSV", story_direction: "Test", visual_constraints: [], visual_preferences: "Neutral", constraints: [] };
     const engine = new Orchestrator(fixtureRunner);
     const document = renderDocument("chatbot", intent, "Notes");
     await store.commit(p, "chatbot", intent, "Notes", await engine.fingerprint(p, "chatbot", models), document);

@@ -80,3 +80,194 @@ replacing the in-memory draft; formal submission still commits HTML and Markdown
 atomically. Builder reads of output/index.html omit only the system-packaged D3
 script, retaining authored scripts. HTML tool argument rejection before execution
 participates in the bounded validation policy. No shell access is provided.
+
+## Editorial visual system and review
+
+Design composition requires a core message, information hierarchy, primary visual,
+typography, background treatment, decoration rules and concrete self-review.
+Schema-driven Markdown parsing and existing fingerprints reject stale contracts
+without conversion or history deletion. The workbench exposes these decisions;
+its geometry view remains a schematic. Screenshot review evaluates design adequacy
+as well as implementation fidelity, using the same Designer role and existing
+bounded owner routing. Asset fallbacks are surfaced in derived delivery notes and
+summary. See [VISUAL_DESIGN.md](VISUAL_DESIGN.md) for verification boundaries.
+
+ExecutionBudget identifies its scope in timeout errors: run and named role-stage
+limits remain independent and unchanged. A stage timeout must not claim that the
+run deadline expired. Designer commission repairs use a revision-checked asset
+patch, and narrative-to-visual expansion establishes a single new progress baseline.
+
+Generated image bytes stay on the server. generate_image returns metadata and
+embedding instructions only. save_html/patch_html resolve img[data-asset-id] to
+the current official generated version before validation. Builder read-back strips
+those embedded bytes along with the packaged D3 library; the server restores them
+on the next save. Asset presence/version/fallback checks remain mandatory.
+
+## Visual acceptance ledger
+
+Review tables validate their header and parse every data row even when the
+separator line is omitted. Asset targets resolve to their using component rather
+than being silently dropped. On repair rounds the same Designer receives previous
+open issues, versioned review history, binary-free source-image size/CSS evidence
+and up to four original asset images through native image input. Open IDs must be
+retained or explicitly closed in Markdown; closed IDs cannot be reused. New
+regressions use new IDs. Missing visibility is not proof of a missing image, and
+the highest visible tick is not proof of the numerical domain limit.
+
+state/reviews/history.json records open/closed IDs and Builder revisions; the
+pending repair checkpoint retains the same history across interruptions. Designer
+owns unsuitable source imagery/composition; Builder owns its opacity, crop and
+placement. Existing deterministic owner routing and two-repair limit remain.
+
+When that limit is reached, the committed HTML stays usable and Builder stays
+completed. Task visual_review.status is needs_revision with current issues, rather
+than reporting a generation failure or visual success. The UI shows this separate
+acceptance result and preserves preview/export. Starting the unchanged completed
+project does not silently restart repair. A deliberate rerun/invalidation can
+produce a new version for review, but continuing does not reset repair counts.
+Unsupported vision never closes previously open issues.
+
+## Explicit operations and rendered samples
+
+POST design-operation requires repair/redesign and a reason; repair may specify an
+explicit professional owner (default Builder). Redesign requires committed Analyst
+facts and creates a new design draft scope, invalidating Designer/Builder only.
+Continue preserves the current scope and direction. Operation reasons enter model
+context; original input and immutable history are retained. No operation silently
+resets persisted repair counts.
+
+Production Builder receives a sample callback from deterministic Orchestrator and
+cannot submit before save_visual_sample. The server validates completed/unfinished
+regions, renders desktop/mobile/print, stores versioned HTML/screenshots/diagnostics,
+and invokes the same Designer model. Builder issues stay local, other owners cause
+formal revision before subsequent implementation. Per-contract sample checks are
+bounded at two; concept/asset/final repairs share the persisted two-repair allowance,
+run deadline and model/tool budgets. Unsupported vision is explicitly unperformed.
+Fixture runners injected in tests do not simulate model artistic judgment.
+
+Image generation and decode checks are separate from Designer acceptance. Alpha
+bounds describe nontransparent pixels at alpha > 8, not semantic subjects. Content
+cache hits reopen visual acceptance; dimensions/format/ratio/transparency failures
+use the declared fallback. Binary payloads remain server-side. The state/assets
+projection exposes metadata only. Durations overlap and cannot be summed into wall
+time; SDK usage cost remains the provider's reported estimate, not an invoice.
+
+Sample versions include their check attempt as well as contract/content, so a
+later review cannot overwrite the earlier sample/review. Read-back verifies the
+sample digest. The workbench computes component-code changes and completed sample
+regions against delivery, without interpreting those differences as artistic
+improvement. The first accessible sample participates in first-preview timing.
+
+## Source-first acquisition
+
+Research targets are registered connector IDs, not advisory institution names.
+`source-registry.ts`, `source-connectors.ts`, `acquisition-scheduler.ts` and
+`dataset-acquisition.ts` separate discovery, metadata inspection, bounded selected
+file/slice acquisition and normalized evidence. ResearchWorkbench owns persisted
+coverage, source/version/config-bound reuse and explicit supplemental search.
+`search_sources` and `fetch_datasets` batch independent work to reduce model
+roundtrips. `save_research_coverage` closes each planned question with actual
+source IDs or a specific gap before formal submission. The five professional
+roles and deterministic dependency ordering remain unchanged. See
+[acquisition implementation](DATA_ACQUISITION_PLAN.md).
+
+## Workbench information hierarchy
+
+The workbench presents current work status, actual sample/preview access and open
+issues. The modification form is separate from default-collapsed diagnostic
+records. Requirement details include user/reference/brand origins only; inferred
+ChatBot defaults are not presented as product requirements. Final visual choices
+belong in the Designer report. ChatBot must not invent topic-based industry rules
+or mandatory palettes/charts/timelines.
+
+Invalidation callers supply the current operation's reason rather than reusing a
+previous execution reason. Diagnostics distinguish the original affected stages
+from those still incomplete; a resolved invalidation remains a historical record.
+Ordinary run/continue is never labelled as an established design direction.
+Only current completed Builder revisions supply final visual-review issues;
+invalidated Designer samples are not shown as current previews. Project switches
+reset the local modification editor; polling preserves edits within a project.
+
+## Model response inactivity
+
+Pi sessions have a model-silence watchdog independent of stage/run deadlines.
+`DREAMATIC_MODEL_IDLE_TIMEOUT_MS` defaults to 90000. Turn starts and streamed
+message updates arm/reset it; assistant completion and tool execution suspend it.
+A waiting notice precedes termination. On expiry, native session abort is requested
+and the caller is released even if the provider stream does not settle promptly.
+The failure states that model response is missing rather than implying that data
+search is still running. Committed work and research progress remain reusable;
+no automatic paid retry is initiated for model silence. Normal parent/stage
+cancellation remains authoritative.
+
+## Research correction contracts
+
+Research feedback separates parameter correction, unmet prerequisites, source
+unavailability, interruption and unexpected internal errors. The Pi-facing tools
+return next_action and exact current IDs for expected correction. Batches expose
+per-item feedback while retaining successes. Repeated unchanged rejected calls are
+blocked before execution and the third rejection terminates explicitly.
+
+ResearchWorkbench owns deterministic candidate IDs, official record verification,
+explicit supplemental-task references and complete/partial/missing coverage.
+compose_research_report assembles registered source/dataset metadata into one
+formal Markdown artifact from a small authored narrative, saves versioned drafts,
+and revalidates scope/input/content/evidence before revision-only submission.
+See [the preimplementation plan](RESEARCH_TOOL_REPAIR_PLAN.md).
+
+Analyst latency controls now use compact calculation receipts, paginated verified
+receipt inspection, and 1–3-fact Markdown narrative batches with server-owned exact
+computed fields. Model metadata snapshots distinguish streaming text, tool argument
+generation and tool execution without exposing reasoning. Idle, absolute model-call
+and Analyst durable-progress clocks are bounded independently; saved calculations
+and revisions survive interruption. See [Analyst workbench](ANALYST_WORKBENCH.md).
+
+## Builder rejected-HTML recovery
+
+HTML resource validation parses CSS syntax through css-tree instead of scanning
+quoted data URLs with a regular expression. CSS and document coverage diagnostics
+are aggregated. A bounded HTML repair draft is persisted under an input-bound
+Builder scope with immutable revisions, content digests and an atomic pointer.
+read_html_draft reads repair input; patch_html prefers that draft, then official
+output. Only passing HTML enters the accepted in-memory delivery slot. A rejected
+new edit clears that slot, so an older accepted page cannot be submitted silently.
+
+Builder HTML failures share one bounded policy across save/patch/native argument
+rejection. Stable issue signatures exclude revision IDs; fewer issues than the
+best saved result reset consecutive failures, while changed content or oscillating
+issues alone do not. Formal Markdown submission remains independently validated.
+Full draft recovery rechecks the current inputs and resources on save or patch;
+invalid drafts never bypass sample, render or final-delivery gates.
+
+## Model call quotas and explicit extensions
+
+DREAMATIC_MODEL_RUN_LIMIT bounds model turns in one explicit start/continue and
+all its automatic retries. DREAMATIC_MODEL_TASK_LIMIT bounds cumulative turns for
+the same requirement scope; both default to 120 and are configurable. Historical
+model/tool/asset/retry/repair counts and reported cost remain persisted. Only the
+run_model counter starts at zero on an explicit new invocation. Changing these
+settings affects subsequent invocations; it never erases history.
+
+POST /api/projects/:id/model-budget accepts an explicit integer amount (1–1000).
+It reserves the scheduler slot, rejects running projects and changed scopes,
+persists a timestamped additive grant (at most 10000 extra turns per scope), and
+updates the state projection without starting generation. The conversation shows
+run and cumulative used/limit. On cumulative exhaustion the user can add 40 calls,
+then separately continue. Grants do not change cost ceilings, repair counts,
+timeouts, existing results or upstream dependencies. The usage ledger preserves
+the grant history during later runs. Exhaustion errors identify run versus task,
+used/limit and the corresponding recovery action.
+
+## Recoverable sample repairs
+
+Builder samples have a separate input-bound HtmlWorkbench scope and immutable
+HTML/completed_components revisions. The input pointer is saved before rendering
+or visual review; failures and interruptions never imply sample acceptance.
+read_visual_sample_draft restores sample input and diagnostics. patch_visual_sample
+applies exact local replacements and reruns sample validation and review. While a
+sample remains unaccepted, patch_html routes an existing sample draft through the
+same sample path. Unfinished sample saves with known completed metadata are also
+routed through sample validation, not final coverage checks. Final HTML acceptance
+remains separate and still rejects unfinished regions. Native argument rejection
+and repeated sample failures use the existing bounded HTML failure policy. No
+model/stage/run limits or visual repair allowances are increased.

@@ -81,6 +81,11 @@ try {
   await modes.getByRole("tab", { name: "视觉方案", exact: true }).click();
   assert.equal(await page.locator(".dw-component-table button[aria-pressed=true]").count(), 1);
   await panel.evaluate(element => { element.scrollTop = 0; });
+  await page.locator('.supporting-panel-toggle').click();
+  for (const label of ['核心信息', '信息层级', '主题视觉', '字体系统', '背景系统', '装饰系统', '视觉自检'])
+    assert.ok(await page.locator('.supporting-panel-fields dt').getByText(label, { exact: true }).isVisible());
+  await page.screenshot({ path: path.join(output, "visual-system.png"), fullPage: true });
+  await page.locator('.supporting-panel-toggle').click();
   await page.screenshot({ path: path.join(output, "narrative-visual.png"), fullPage: true });
   await page.getByRole("combobox", { name: "筛选组件所属段落" }).selectOption("all");
   await page.locator(".dw-component-select").filter({ hasText: "附注" }).click();
@@ -126,6 +131,17 @@ try {
   await store.commit(ready, "designer", parsed.data, parsed.notes, "fixture-hash", parsed.markdown);
   await page.waitForFunction(() => document.querySelector(".dw-status-badge")?.textContent === "正式方案");
   assert.ok(await page.getByText("正式设计已提交，可用于作品实现", { exact: true }).isVisible());
+  const delivery = await fixtureRunner(ready, "builder", {} as any, { signal: new AbortController().signal, event: () => {} });
+  await store.commit(ready, "builder", delivery.data, delivery.notes, "fixture-builder-hash", delivery.markdown);
+  ready.state.status = "completed";
+  ready.state.visual_review = {status: "needs_revision", revision: ready.state.stages.builder.version!, rounds: 3, issues: [{id: "R1", owner: "builder", component: "heading", message: "Synthetic unresolved visual issue"}]};
+  await store.save(ready);
+  await page.getByRole("tab", {name: "信息图作品", exact: true}).click();
+  await page.getByText("作品已生成，视觉验收未通过", {exact: true}).waitFor();
+  assert.ok(await page.locator('iframe[title="信息图作品"]').isVisible());
+  assert.ok(await page.getByText("作品已生成 · 视觉验收未通过", {exact: true}).isVisible());
+  assert.ok(await page.getByText("heading · builder：Synthetic unresolved visual issue", {exact: true}).isVisible());
+  await page.screenshot({path: path.join(output, "visual-review-needs-revision.png"), fullPage: false});
   assert.deepEqual(errors, []); console.log(JSON.stringify({ output, checks: ["three task views", "first-fold narrative", "evidence drawer and focus restoration", "relation endpoints", "component issue navigation", "polling preserves context and scroll", "fact tab navigation", "fact library", "keyboard tabs", "container-based narrow layout", "formal transition", "no page errors"] }));
 } finally {
   await browser?.close(); if (child.exitCode === null && child.signalCode === null) { child.kill("SIGTERM"); await new Promise(resolve => child.once("exit", resolve)); } await rm(config, { recursive: true, force: true });

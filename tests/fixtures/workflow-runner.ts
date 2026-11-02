@@ -50,6 +50,7 @@ const fixtureDataRunner: (...args: Parameters<Runner>) => Promise<Omit<StageResu
   const data = await upstream(p, role);
   if (role === "chatbot") {
     const intent: Intent = {
+      visual_constraints: [],
       title: "测试数据 · 生长的轨迹",
       topic: "测试数据参与趋势（测试）",
       objective: "使用内置 CSV 测试从数据到信息图的工作流",

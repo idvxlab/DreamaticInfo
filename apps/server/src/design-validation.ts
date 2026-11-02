@@ -51,15 +51,15 @@ export function designReferenceIssues(d: Design, facts: DataFacts): DesignIssue[
     if (b.width <= 0 || b.height <= 0 || b.x < 0 || b.y < 0 || b.x + b.width > d.page.width || b.y + b.height > d.page.height) add("布局", `位置 ${b.x},${b.y}，尺寸 ${b.width}×${b.height} 超出页面 ${d.page.width}×${d.page.height}`, "使用正尺寸，组件须完整位于页面内");
   }
   for (const asset of d.assets) {
-    if (!asset.id.trim() || assetIds.has(asset.id)) issues.push({ location: `素材 ${asset.id}／编号`, message: "素材编号为空或重复", fix: "使用非空且唯一的素材编号" });
+    if (!asset.id.trim() || assetIds.has(asset.id)) issues.push({ asset: asset.id, location: `素材 ${asset.id}／编号`, message: "素材编号为空或重复", fix: "使用非空且唯一的素材编号" });
     assetIds.add(asset.id);
-    if (asset.width <= 0 || asset.height <= 0) issues.push({ location: `素材 ${asset.id}`, message: "素材尺寸须为正", fix: "指定有效尺寸" });
+    if (asset.width <= 0 || asset.height <= 0) issues.push({ asset: asset.id, location: `素材 ${asset.id}`, message: "素材尺寸须为正", fix: "指定有效尺寸" });
     const commission = asset.commission;
     if (commission) {
-      for (const id of commission.content_ids) if (!known.has(id)) issues.push({ location: `素材 ${asset.id}`, message: `未知事实 ${id}`, fix: "关联正式事实编号" });
-      if (commission.semantics !== "decorative" && !commission.content_ids.length) issues.push({ location: `素材 ${asset.id}`, message: "信息性素材缺少事实依据", fix: "关联正式事实，不借插画编造结构或数据" });
-      if (commission.semantics === "data") issues.push({ location: `素材 ${asset.id}`, message: "精确数据编码不能交给图像生成", fix: "改用有正式映射的代码组件" });
-      if (!d.components.some(component => component.asset_ids?.includes(asset.id))) issues.push({ location: `素材 ${asset.id}`, message: "委托素材未被组件引用", fix: "添加使用关系或删除不必要委托" });
+      for (const id of commission.content_ids) if (!known.has(id)) issues.push({ asset: asset.id, location: `素材 ${asset.id}`, message: `素材委托关联内容必须是事实编号，不能是组件编号：${id}`, fix: "用 patch_design_asset 修正 commission.content_ids：只填 datafacts 中真实事实编号；纯装饰写无。组件通过自己的 asset_ids 引用素材" });
+      if (commission.semantics !== "decorative" && !commission.content_ids.length) issues.push({ asset: asset.id, location: `素材 ${asset.id}`, message: "信息性素材缺少事实依据", fix: "关联正式事实，不借插画编造结构或数据" });
+      if (commission.semantics === "data" && asset.implementation === "generated_image") issues.push({ asset: asset.id, location: `素材 ${asset.id}`, message: "精确数据编码不能交给图像生成", fix: "改用有正式映射的代码组件" });
+      if (!d.components.some(component => component.asset_ids?.includes(asset.id))) issues.push({ asset: asset.id, location: `素材 ${asset.id}`, message: "委托素材未被组件引用", fix: "添加使用关系或删除不必要委托" });
     }
   }
   return issues;

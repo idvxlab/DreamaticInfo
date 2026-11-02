@@ -23,6 +23,7 @@ export class RunMetrics {
 }
 
 export interface PerformanceSummary {
+  first_fact_ms?: number; max_model_call_ms?: number; max_context_characters?: number; model_output_characters?: number;
   wall_ms: number; first_preview_ms?: number; delivery_ms?: number;
   model_calls: number; repairs: number; stage_attempts: number;
   durations_ms: Record<string, number>; waiting_ms: Record<string, number>;
@@ -44,7 +45,13 @@ export async function performanceSummary(root: string): Promise<PerformanceSumma
     const at = Date.parse(event.at);
     if (event.kind === 'run_start' && waiting) { result.waiting_ms[waiting.kind] = (result.waiting_ms[waiting.kind] ?? 0) + Math.max(0, at - waiting.at); waiting = undefined; }
     if (['waiting_for_information', 'interrupted', 'failed'].includes(event.kind)) waiting = { kind: event.kind, at };
-    if (event.kind === 'model_call') result.model_calls++;
+    if (event.kind === 'analysis_fact_saved' && result.first_fact_ms === undefined) result.first_fact_ms = Math.max(0, at - start);
+    if (event.kind === 'model_call') {
+      result.model_calls++;
+      result.max_model_call_ms = Math.max(result.max_model_call_ms ?? 0, event.duration_ms ?? 0);
+      result.max_context_characters = Math.max(result.max_context_characters ?? 0, event.context_characters ?? 0);
+      result.model_output_characters = (result.model_output_characters ?? 0) + (event.output_characters ?? 0);
+    }
     if (event.kind === 'repair') result.repairs++;
     if (event.kind === 'stage_attempt') result.stage_attempts++;
     if (typeof event.duration_ms === 'number') {

@@ -73,7 +73,7 @@ Models cannot overwrite arbitrary upstream files or execute shell commands. Cont
 
 Program checks cover resources, console errors, overflow, bounds, detectable overlap/occlusion, mobile behavior and print diagnostics. Visual review covers hierarchy, reading path, associations, style, background interference, decoration, whitespace, illustration suitability and design fidelity. Program checks do not prove beauty, and visual models do not replace data validation. Check image-input capability and disclose unsupported review.
 
-Default to one selected design and one visual review; use explicit issue ownership and bounded local repair. Builder owns implementation, Designer owns composition/assets, upstream roles own factual/source problems. Preserve issues, fixes, versions and timings; avoid free-form negotiation loops. Major composition changes may require full review. Current diagnostic limits are documented separately rather than claimed as complete.
+Default to one selected design, one rendered sample review and final-delivery review; use explicit issue ownership and bounded local repair. Builder owns implementation, Designer owns composition/assets, upstream roles own factual/source problems. Preserve issues, fixes, versions and timings; avoid free-form negotiation loops. Major composition changes may require full review. Current diagnostic limits are documented separately rather than claimed as complete.
 
 Measure true wall time from valid user input to first viewable preview and final checked delivery, with PDF measured independently. Keep waiting/pauses, model/search/assets/checks/retries/repairs visible. Record stage time, model calls, context scale and tool time before prioritizing optimization. Use bounded independent work, overlap assets with implementation only after official design, and bind caches to content/version/configuration. Share end-to-end deadlines, cancellation and retry/repair counts. Reduce optional exploration/decoration when budgets shrink, never factual, citation or basic-usability checks. Compare real runs using identical inputs, configurations and quality standards.
 
@@ -86,3 +86,16 @@ Before modifying code, inspect instructions, product/architecture/protocol docs,
 Run check, relevant tests and production build after meaningful changes. Cover roundtrip/reference/recovery, source calculations, structural semantics and rejection, assets/fallbacks, desktop/mobile/print/offline behavior, HTML/PDF consistency, concurrency/cache invalidation/cancellation/timeouts/budgets. Keep at least statistical, illustrated explanatory and timeline/process fixtures under tests/. Never clear runtime directories implicitly through startup or tests. Before authorized cleanup, identify the actual project-only scope; preserve credentials, configuration, original user material and neighboring repositories.
 
 Report implementation, removed paths, supported/unsupported capabilities, checks, browser verification and real-provider limitations honestly. Fixture success is not real generation-quality or performance evidence. See [Implementation](INFOGRAPHIC_IMPLEMENTATION.md), [Architecture](ARCHITECTURE.md), [Protocol](MARKDOWN_PROTOCOL.md), [Plan](REFACTOR_PLAN.md) and [Validation](VALIDATION.md) for current details.
+
+The executable editorial/visual contract, baseline and review boundaries are
+specified in [VISUAL_DESIGN.md](VISUAL_DESIGN.md). Designer must record the core
+message, information hierarchy, primary visual, typography, background treatment,
+decorative language and concrete visual self-review before formal submission.
+
+Public research uses dedicated official APIs and provenance-checked repositories
+before supplemental web discovery. Plans bind registered source IDs. Inspect
+metadata before retrieving selected files or bounded geography/year slices;
+register original responses, versions, licenses, transformations and full selected
+data. Every planned question must bind evidence or disclose a specific gap before
+submission. General web search requires an explicit purpose/reason and never
+silently replaces a failed connector. See [acquisition plan](DATA_ACQUISITION_PLAN.md).

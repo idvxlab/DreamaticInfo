@@ -15,12 +15,13 @@ const { parseSearchPlan } = await import("../apps/server/src/research-plan.js");
 const { validateProvenance } = await import("../apps/server/src/provenance.js");
 const { saveRuntimeConfig } = await import("../apps/server/src/config-store.js");
 const { default: ResearchProgress } = await import("../apps/web/src/ResearchProgress.js");
-const plan = (rows = "| Q1 | 总体趋势 | population trend | 1 | 官方统计 |\n| Q2 | 年龄差异 | population age | 2 | 官方统计 |") => `# 搜索计划\n\n## 调研目标\n核实趋势与年龄差异；两类资料足以支持结论后停止，缺失指标说明局限。\n\n## 搜索队列\n\n| 编号 | 问题 | 关键词 | 优先级 | 目标来源 |\n| --- | --- | --- | --- | --- |\n${rows}`;
+const plan = (rows = "| Q1 | 总体趋势 | population trend | 1 | worldbank |\n| Q2 | 年龄差异 | population age | 2 | worldbank |") => `# 搜索计划\n\n## 调研目标\n核实趋势与年龄差异；两类资料足以支持结论后停止，缺失指标说明局限。\n\n## 搜索队列\n\n| 编号 | 问题 | 关键词 | 优先级 | 目标来源 |\n| --- | --- | --- | --- | --- |\n${rows}`;
 const article = "年度统计结果显示参与人数有所增加。数据按年度与年龄组分列，资料包含统计范围、采集方法、误差与来源说明。".repeat(10);
 function response(text: string, contentType = "text/html") { return { text, contentType, url: "https://source.example/data", buffer: Buffer.from(text) }; }
 try {
   await test("research plan validates unique queue entries, priorities, empty upload-only plans and saved limits", async () => {
     assert.equal(parseSearchPlan(plan(), false).length, 2);
+    assert.throws(()=>parseSearchPlan(plan().replace("population trend","无"),false),/关键词尚未填写/);
     assert.throws(() => parseSearchPlan("## 调研目标\n使用上传资料\n\n## 搜索队列\n无", false), /不能为空/);
     assert.equal(parseSearchPlan("## 调研目标\n使用上传资料\n\n## 搜索队列\n无", true).length, 0);
     assert.throws(() => parseSearchPlan(plan().replace("population age", "Population  trend"), false), /不能重复/);
@@ -28,6 +29,16 @@ try {
     await saveRuntimeConfig({ values: { DREAMATIC_RESEARCH_MAX_TASKS: "1" } });
     assert.throws(() => parseSearchPlan(plan(), false), /条目上限/);
     await saveRuntimeConfig({ values: { DREAMATIC_RESEARCH_MAX_TASKS: "40" } });
+  });
+  await test("placeholder keyword records show the actual question and cannot issue a search request", async () => {
+    const p=await store.create("Incomplete search plan","live");let calls=0;
+    const w=await ResearchWorkbench.open(p,{search:async()=>{calls++;return [];},fetch:fetchSource});
+    await w.savePlan(plan());
+    await updateProgress(p,w.scope,state=>{state.tasks[0].query="无";state.tasks[0].question="财政货币政策";});
+    const html=renderToStaticMarkup(createElement(ResearchProgress,{projectId:p.id,progress:await w.snapshot()}));
+    assert.match(html,/<strong>财政货币政策<\/strong>/);assert.match(html,/待完善关键词/);assert.doesNotMatch(html,/<strong>无<\/strong>/);
+    await assert.rejects(w.search("Q1"),/尚未发起搜索请求/);assert.equal(calls,0);
+    assert.equal((await w.snapshot()).tasks[0].attempts,0);
   });
   await test("body extraction rejects challenge, login and thin pages but retains real articles and compact structured data", () => {
     assert.equal(extractSource(response('<title>Checking your browser - reCAPTCHA</title><body>Checking your browser before accessing the site</body>')).quality.status, "rejected");
@@ -50,7 +61,7 @@ try {
     const retry = await ResearchWorkbench.open(p, network);
     assert.equal((await retry.search("Q1")).reused, true); assert.equal(calls, 2);
     assert.match(await retry.report(true), /https:\/\/source.example/);
-    await retry.savePlan(plan("| Q2 | 年龄差异 | population age | 2 | 官方统计 |"));
+    await retry.savePlan(plan("| Q2 | 年龄差异 | population age | 2 | worldbank |"));
     assert.equal((await retry.snapshot()).archived_tasks.length, 1);
     await retry.savePlan(plan().replace("总体趋势", "核对总体趋势"));
     assert.equal((await retry.search("Q1")).reused, true); assert.equal(calls, 2);

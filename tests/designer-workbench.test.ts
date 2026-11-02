@@ -113,6 +113,47 @@ try {
     for (const unit of ["%、OR", "千、%", "kg; %"]) assert.equal(hasMixedUnits(unit), true);
     for (const unit of ["mg/dL", "kg·m⁻²", "%", "千人"]) assert.equal(hasMixedUnits(unit), false);
   });
+  await test("asset repair changes only its commission and retains unrelated Markdown", async () => {
+    const { documentTemplate, parseDocument } = await import("../apps/server/src/markdown-protocol.js");
+    const asset = parseDocument("designer", documentTemplate("designer")).data.assets[0];
+    asset.width = 640; asset.height = 480; asset.id = "A-local"; asset.commission.semantics = "decorative";
+    asset.commission.content_ids = [design.components[0].id];
+    const candidate = structuredClone(design);
+    candidate.assets = [asset]; candidate.components[0].asset_ids = [asset.id];
+    current = revision(await work.saveDraft(renderDocument("designer", candidate, "Keep notes"), current));
+    const before = (await work.document("draft", current))!;
+    assert.match(await work.readDraft({ asset_id: asset.id }), /A-local/);
+    assert.ok((await work.repairSnapshot())!.issues.some(issue => issue.fact === "asset:A-local"));
+    asset.commission.content_ids = [];
+    const item = renderDocument("designer", { ...candidate, assets: [asset] }).split("## 素材\n\n")[1].split(/^## /m)[0].trim();
+    const stale = current;
+    current = revision(await work.patchAsset(current, asset.id, item));
+    assert.equal((await work.document("draft", current))!.split("## 素材\n\n")[0], before.split("## 素材\n\n")[0]);
+    assert.equal((await work.progress()).issues.length, 0, JSON.stringify((await work.progress()).issues));
+    await assert.rejects(work.patchAsset(stale, asset.id, item), /版本已变化/);
+    await assert.rejects(work.patchAsset(current, asset.id, item + "\n\n## 说明\nInjected"));
+    current = revision(await work.saveDraft(renderDocument("designer", design), current));
+  });
+  await test("same-turn disjoint component patches merge without losing edits; touched targets and full saves remain conflicts", async () => {
+    current = revision(await work.saveDraft(renderDocument("designer", design), current));
+    const base = current;
+    const targets = design.components.slice(0, 5).map((component: any, i: number) => ({ ...component, title: `Concurrent repair ${i}` }));
+    const componentSection = (component: any) => renderDocument("designer", { ...design, components: [component] }).split("## 组件\n\n")[1].split(/^## /m)[0].trim();
+    const results = await Promise.all(targets.map((component: any) => work.patchComponent(base, component.id, componentSection(component))));
+    current = revision(results.at(-1)!);
+    const progress = await work.progress();
+    for (const target of targets) assert.equal(progress.design!.components.find(c => c.id === target.id)!.title, target.title);
+    assert.deepEqual(progress.design!.storyline, design.storyline);
+    await assert.rejects(work.patchComponent(base, targets[0].id, componentSection(targets[0])), /当前版本.*read_design_draft/);
+    assert.equal((await work.progress()).revision, current);
+    const beforeSave = current;
+    current = revision(await work.saveDraft(renderDocument("designer", design), current));
+    await assert.rejects(work.patchComponent(beforeSave, targets[0].id, componentSection(targets[0])), /版本已变化/);
+    await assert.rejects(work.reorderStories(beforeSave, design.storyline.map((story: any) => story.id)), /版本已变化/);
+    current = revision(await work.saveDraft("# Invalid design\n\nMissing sections", current));
+    await assert.rejects(work.patchComponent(current, targets[0].id, componentSection(targets[0])), /结构不可解析.*[\s\S]*base_revision/);
+    current = revision(await work.saveDraft(renderDocument("designer", design), current));
+  });
   await test("component-story mappings and units are checked, final revision alone submits and only commit enables Builder", async () => {
     const bad = structuredClone(design); bad.components[1].story_ids = ["unknown-story"];
     current = revision(await work.saveDraft(renderDocument("designer", bad), current));

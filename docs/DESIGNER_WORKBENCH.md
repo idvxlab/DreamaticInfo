@@ -44,3 +44,47 @@ A series explicitly declaring multiple units with commas/semicolons cannot map t
 Historical checkpoints passed 118 tests for drafts/API/native Pi, 123 after component/unit protection, and 126 after UI reorganization; check and production build passed. Isolated narrative-preview.mts uses temporary configuration/projects and Chromium to verify section/relationship/evidence navigation, updates, focus, component location, no scroll stealing, narrow layouts and official switching. Product imports no fixture executor.
 
 External paid models and user projects were not run. Prompt requirements do not guarantee real save frequency or narrative quality, and program structure/reference checks cannot prove free-text reasoning. See [VALIDATION.md](VALIDATION.md) for current totals.
+
+## Editorial and visual system
+
+The whole-composition panel displays the seven required editorial/visual decisions
+alongside existing layout/media rules. The geometry view is explicitly a layout
+schematic, not a finished art preview. Visual self-review is model-authored design
+reasoning; neither filled fields nor preflight success certify aesthetic quality.
+See VISUAL_DESIGN.md for the baseline, visual contract and owner-based review.
+
+## Scoped repair and progress
+
+read_design_draft also accepts asset_id; patch_design_asset edits one complete
+asset item with revision checking and preserves every other section and notes.
+commission.content_ids references official facts only; component.asset_ids records
+which components use an asset. Decorative commissions may have no fact IDs.
+Assets participate in repair snapshots under their own namespace. Expanding a
+narrative draft into visual components establishes a new issue baseline once;
+phase toggling cannot reset the no-progress window. Designer feedback points to
+component/asset tools instead of Analyst evidence instructions.
+
+## Saved visual workflow
+
+The visual workflow panel exposes constraint origins, explicit operation/reason,
+local repair/redesign controls, immutable rendered-sample links and status, current
+formal revision, asset technical metadata and acceptance/fallback. Its controlled
+reason editor preserves local state when project polling updates props. The
+geometry plan remains separately labelled as schematic. Unsupported image review
+is displayed as unperformed. Final delivery cannot retain sample placeholders.
+
+## Disjoint local edits and version conflicts
+
+Each local item patch records its parent revision and target namespace/ID in the
+immutable revision metadata. Multiple patches issued from one base revision can
+merge only if every intervening revision is a local patch to a different target,
+the requested target remains unchanged, and document-level decisions and notes
+remain unchanged. The merged document receives normal parsing, reference checks
+and preflight. Edits to the same target (including no-op edits and changed-back
+content), whole-document saves, reorders, unknown versions and history without
+patch metadata still require rereading the latest revision. No history is migrated.
+
+Version-conflict feedback includes the current revision and targeted read action.
+Unparseable drafts instead return their actual parser diagnostics and the current
+base_revision for full-structure repair. These distinct conditions no longer share
+an ambiguous error. Existing bounded failure and stagnation policies remain active.

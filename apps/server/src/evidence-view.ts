@@ -1,3 +1,4 @@
+import { readProgress, readableSource } from "./research-state.js";
 import { load } from "cheerio";
 import { readFile } from "node:fs/promises";
 import type { Project, Source } from "../../../packages/shared/types.js";
@@ -42,8 +43,20 @@ export async function loadEvidenceSource(p: Project, source: Source): Promise<Ev
   let document = await readFile(await safePath(root, source.path), "utf8");
   const upload = p.uploads.find(file => file.id === source.id);
   if (upload && /\.(csv|tsv|txt|md|json)$/i.test(upload.path)) document += "\n\n## 原始上传文本\n\n" + await readFile(await safePath(root, upload.path), "utf8");
+  let raw_format=upload?.path.split(".").at(-1)?.toLowerCase();
+  if(!upload) {
+    const entry=(await readProgress(p))?.sources.find(entry=>entry.source?.id===source.id);
+    if(entry?.acquisition) {
+      await readableSource(p,entry);
+      const receipt=entry.acquisition;
+      if(receipt.material_path && ["csv","tsv"].includes(receipt.format ?? "")) {
+        document+="\n\n## 原始数据文本\n\n"+await readFile(await safePath(root,receipt.material_path),"utf8");
+        raw_format=receipt.format;
+      }
+    }
+  }
   const digest = hash(document);
-  return { source, digest, raw_format: upload?.path.split(".").at(-1)?.toLowerCase(), blocks: evidenceBlocks(source.id, digest, document) };
+  return { source, digest, raw_format, blocks: evidenceBlocks(source.id, digest, document) };
 }
 export function matchingEvidence(source: EvidenceSource, quote: string, location = "") {
   const normalized = evidenceText(quote);

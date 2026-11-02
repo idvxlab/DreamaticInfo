@@ -26,6 +26,7 @@ export interface Source {
   limitations: string[];
 }
 export interface Intent {
+  visual_constraints: { requirement: string; origin: "user" | "reference" | "brand" | "default"; basis: string }[];
   title: string;
   topic: string;
   objective: string;
@@ -100,10 +101,12 @@ export interface DataFacts {
   facts: Fact[];
 }
 export interface Design {
+  constraint_sources?: { field: string; source: "user" | "reference" | "brand" | "default"; detail: string }[];
   composition: {
     task: "statistical" | "comparison" | "temporal" | "process" | "hierarchy" | "spatial" | "relationships" | "explanation" | "guide";
     reading: "guided" | "exploratory" | "hybrid";
     medium: "poster" | "responsive" | "interactive" | "scrollytelling";
+    core_message: string; information_hierarchy: string; primary_visual: string; typography: string; background_treatment: string; decoration_rules: string; visual_acceptance: string;
     selection_basis: string; communication: string; art_direction: string;
     layout_rules: string; safe_regions: string; responsive_rules: string; print_rules: string; acceptance: string;
   };
@@ -138,6 +141,7 @@ export interface Design {
   assets: {
     id: string;
     purpose: string;
+    implementation: "css" | "svg" | "generated_image";
     commission: { semantics: "decorative" | "explanatory" | "data"; content_ids: string[]; placement: string; safe_regions: string; transparent: "required" | "optional" | "opaque"; crop: string; layering: string; factual_boundary: string; acceptance: string; fallback: string };
     width: number;
     height: number;
@@ -175,6 +179,10 @@ export interface Stage {
   error?: string;
 }
 export interface TaskState {
+  invalidation?: { from: Role; affected: Role[]; reason: string; at: string };
+  execution_budget?: Record<string, number>;
+  visual_sample?: { version: string; scope: string; status: "passed" | "issues" | "unsupported"; issues: { category?: "concept" | "asset" | "implementation" | "data"; id: string; owner: Role; component: string; message: string }[]; checks: number };
+  visual_review?: { status: "pending" | "passed" | "unsupported" | "needs_revision"; revision: string; issues: { category?: "concept" | "asset" | "implementation" | "data"; id: string; owner: Role; component: string; message: string }[]; rounds: number };
   project_id: string;
   status: Status;
   current_stage: Role | null;
@@ -186,6 +194,7 @@ export interface TaskState {
   error: string | null;
 }
 export interface Project {
+  execution?: { mode: "continue" | "repair" | "redesign"; at: string; reason: string; design_scope?: string };
   id: string;
   title: string;
   brief: string;
@@ -196,9 +205,17 @@ export interface Project {
   messages: Message[];
   state: TaskState;
 }
+export interface ModelActivity {
+  role: Role; attempt: number; phase: "waiting" | "text" | "tool_arguments" | "processing" | "tool" | "finished";
+  started_at: string; first_output_at?: string; last_output_at?: string;
+  input_characters: number; output_characters: number; tool?: string;
+}
 export interface ProjectDetail extends Project {
+  model_activity?: ModelActivity;
+  sample_comparison?: { sample_version: string; changed_components: string[]; completed_regions: string[] };
+  asset_observations?: { id: string; version: string; status: "ready" | "fallback"; visual_acceptance?: string; lifecycle?: string[]; error?: string; technical?: { width: number; height: number; bytes: number; has_transparency?: boolean } }[];
   retained_documents?: string[];
-  performance?: { wall_ms: number; first_preview_ms?: number; delivery_ms?: number; model_calls: number; repairs: number; stage_attempts: number; durations_ms: Record<string, number>; waiting_ms: Record<string, number> };
+  performance?: { first_fact_ms?: number; max_model_call_ms?: number; max_context_characters?: number; model_output_characters?: number; wall_ms: number; first_preview_ms?: number; delivery_ms?: number; model_calls: number; repairs: number; stage_attempts: number; durations_ms: Record<string, number>; waiting_ms: Record<string, number> };
   stage_results?: Partial<Record<Role, { notes: string; summary: string }>>;
   intent?: Intent;
   research?: Research;
@@ -212,7 +229,16 @@ export interface ProjectDetail extends Project {
   files: string[];
 }
 
-export interface SearchHit { title: string; url: string; description: string }
+export interface SourceMetadata {
+  connector: string; record_id: string; publisher: string | null; license: string | null;
+  version: string | null; upstream_url: string | null; scope: string;
+}
+export interface ToolFeedback { category: "parameter" | "prerequisite" | "unavailable" | "interrupted" | "internal"; code:string; message:string; next_action:string; repeated:number }
+export interface SearchHit { candidate_id?: string; title: string; url: string; description: string; metadata?: SourceMetadata }
+export interface AcquisitionReceipt {
+  metadata: SourceMetadata; material_path?: string; material_hash?: string; format?: string; catalog_path?: string; catalog_hash?: string; raw_path: string; raw_hash: string; parameters: Record<string, string>;
+  transformations: string[]; rows: number | null; complete: boolean;
+}
 export interface SearchTask {
   id: string;
   question: string;
@@ -226,6 +252,11 @@ export interface SearchTask {
   error?: string;
   config_key?: string;
   config_attempts?: number;
+  duration_ms?: number;
+  feedback?: ToolFeedback;
+  resolution?: {source_ids:string[]; gap:string|null};
+  supplemental?: { purpose: "data_gap" | "background" | "image"; reason: string; related_task_ids?: string[] };
+  inspection?: Record<string, unknown>;
 }
 export interface CollectedSource {
   id: string;
@@ -248,11 +279,14 @@ export interface CollectedSource {
   reader_attempts?: number;
   content_hash?: string;
   preview?: string;
+  acquisition?: AcquisitionReceipt;
+  feedback?: ToolFeedback;
 }
 export interface ResearchProgress {
   scope: string;
   revision: number;
   updated_at: string;
+  report_revision?: string;
   plan_markdown: string;
   tasks: SearchTask[];
   sources: CollectedSource[];
@@ -272,7 +306,7 @@ export interface AnalysisProgress {
   message: string;
 }
 
-export interface DesignIssue { component?: string; story?: string; location: string; message: string; fix: string; }
+export interface DesignIssue { asset?: string; component?: string; story?: string; location: string; message: string; fix: string; }
 export interface DesignProgress {
   status: "empty" | "draft" | "stale" | "unavailable";
   revision?: string;

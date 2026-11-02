@@ -9,24 +9,52 @@
     },
     "status": {
       "type": "string",
-      "enum": ["pending", "running", "completed", "failed", "interrupted"]
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "interrupted"
+      ]
     },
     "current_stage": {
-      "type": ["string", "null"],
-      "enum": ["chatbot", "researcher", "analyst", "designer", "builder", null]
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "chatbot",
+        "researcher",
+        "analyst",
+        "designer",
+        "builder",
+        null
+      ]
     },
     "completed": {
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["chatbot", "researcher", "analyst", "designer", "builder"]
+        "enum": [
+          "chatbot",
+          "researcher",
+          "analyst",
+          "designer",
+          "builder"
+        ]
       }
     },
     "pending": {
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["chatbot", "researcher", "analyst", "designer", "builder"]
+        "enum": [
+          "chatbot",
+          "researcher",
+          "analyst",
+          "designer",
+          "builder"
+        ]
       }
     },
     "stages": {
@@ -79,7 +107,10 @@
               }
             }
           },
-          "required": ["status", "attempts"]
+          "required": [
+            "status",
+            "attempts"
+          ]
         },
         "researcher": {
           "type": "object",
@@ -127,7 +158,10 @@
               }
             }
           },
-          "required": ["status", "attempts"]
+          "required": [
+            "status",
+            "attempts"
+          ]
         },
         "analyst": {
           "type": "object",
@@ -175,7 +209,10 @@
               }
             }
           },
-          "required": ["status", "attempts"]
+          "required": [
+            "status",
+            "attempts"
+          ]
         },
         "designer": {
           "type": "object",
@@ -223,7 +260,10 @@
               }
             }
           },
-          "required": ["status", "attempts"]
+          "required": [
+            "status",
+            "attempts"
+          ]
         },
         "builder": {
           "type": "object",
@@ -271,19 +311,223 @@
               }
             }
           },
-          "required": ["status", "attempts"]
+          "required": [
+            "status",
+            "attempts"
+          ]
         }
       },
-      "required": ["chatbot", "researcher", "analyst", "designer", "builder"]
+      "required": [
+        "chatbot",
+        "researcher",
+        "analyst",
+        "designer",
+        "builder"
+      ]
     },
     "updated_at": {
       "type": "string"
     },
     "last_success_at": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "error": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "visual_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "revision",
+        "issues",
+        "rounds"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "passed",
+            "unsupported",
+            "needs_revision"
+          ]
+        },
+        "revision": {
+          "type": "string"
+        },
+        "rounds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "owner",
+              "component",
+              "message"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "owner": {
+                "enum": [
+                  "researcher",
+                  "analyst",
+                  "designer",
+                  "builder"
+                ]
+              },
+              "component": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "category": {
+                "enum": [
+                  "concept",
+                  "asset",
+                  "implementation",
+                  "data"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "visual_sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "issues",
+            "unsupported"
+          ]
+        },
+        "checks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "owner",
+              "component",
+              "message"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "owner": {
+                "enum": [
+                  "researcher",
+                  "analyst",
+                  "designer",
+                  "builder"
+                ]
+              },
+              "component": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "category": {
+                "enum": [
+                  "concept",
+                  "asset",
+                  "implementation",
+                  "data"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "version",
+        "scope",
+        "status",
+        "checks",
+        "issues"
+      ]
+    },
+    "execution_budget": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "invalidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "enum": [
+            "chatbot",
+            "researcher",
+            "analyst",
+            "designer",
+            "builder"
+          ]
+        },
+        "affected": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "chatbot",
+              "researcher",
+              "analyst",
+              "designer",
+              "builder"
+            ]
+          }
+        },
+        "reason": {
+          "type": "string"
+        },
+        "at": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "affected",
+        "reason",
+        "at"
+      ]
     }
   },
   "required": [

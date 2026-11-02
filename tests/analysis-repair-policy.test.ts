@@ -67,4 +67,14 @@ try {
     for (let i = 0; i < 8; i++) assert.match(repair.review(state(0)).message, /submit_stage/);
     assert.equal(repair.fatal, undefined);
   });
+  await test("narrative-to-visual expansion establishes one new baseline without rewarding phase oscillation", () => {
+    const narrative = { ...state(1), phase: 0 };
+    const policy = new AnalysisRepairPolicy(narrative, "design", "items", "Use patch_design_asset for asset references.");
+    const expanded = { ...state(8), phase: 1, verified: narrative.verified };
+    assert.equal(policy.review(expanded).progress, true);
+    assert.equal(policy.review({ ...expanded, issues: expanded.issues.slice(1) }).progress, true);
+    assert.equal(policy.review(expanded).progress, false);
+    policy.review({ ...expanded, phase: 0 });
+    assert.throws(() => policy.review(expanded), /patch_design_asset/);
+  });
 } finally { await rm(root, { recursive: true, force: true }); }

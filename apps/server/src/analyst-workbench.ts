@@ -1,11 +1,11 @@
-import { saveCalculation, calculationMarkdown, type SourceCalculation } from "./source-calculation.js";
+import { buildCalculation, saveGroupedCalculations, calculationMarkdown, calculationTableGuide, type CalculationReceipt, type SourceCalculation } from "./source-calculation.js";
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import type { Project, Research, Fact, AnalysisProgress } from "../../../packages/shared/types.js";
 import { atomic, projectDir, safePath } from "./store.js";
 import { hash, schemas } from "./validation.js";
-import { parseDocument } from "./markdown-protocol.js";
+import { parseDocument, renderDocument, parseComputedNarratives } from "./markdown-protocol.js";
 import { analystIssues, analysisReport, type AnalysisIssue } from "./analyst-validation.js";
 import type { RepairSnapshot } from "./analysis-repair-policy.js";
 import { EVIDENCE_VERSION, loadEvidenceSource, evidenceMarkdown, type EvidenceSource } from "./evidence-view.js";
@@ -77,6 +77,13 @@ export class AnalystWorkbench {
     return { ...inspection, markdown, revision, file: `${directory}/draft.md` };
   }
   private description(draft: Draft) { return `草稿版本：${draft.revision}\n草稿文件：${draft.file}\n\n${draft.report}`; }
+  async progressKey() {
+    try {
+      const pointer = JSON.parse(await readFile(path.join(projectDir(this.p.id), this.directory, "current.json"), "utf8"));
+      const meta = JSON.parse(await readFile(await safePath(projectDir(this.p.id), `${this.directory}/revisions/${pointer.revision}/meta.json`), "utf8"));
+      return { digest: String(meta.digest), verified: meta.verified.length as number };
+    } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined; throw error; }
+  }
   async repairSnapshot(): Promise<RepairSnapshot | undefined> {
     const draft = await this.current();
     return draft && { parsed: !!draft.parsed, factIds: (draft.parsed?.data.facts ?? []).map((fact: Fact) => fact.id), verified: draft.verified, issues: draft.issues };
@@ -107,10 +114,71 @@ export class AnalystWorkbench {
   async catalog() {
     return "# Analyst 来源目录\n\n编号必须原样复制，不创建 S-01 等别名。事实类型 value/comparison/trend/distribution/correlation/proportion/categorization/rank/extreme/outlier；依据方式 quoted/computed/inferred/forecast；关联类型 temporal/comparison/correlation/causal/contains/context。distribution 不能作为关联类型。\n\n| 来源编号 | 标题 | 原文件 | 内容摘要 | 局限 |\n| --- | --- | --- | --- | --- |\n" + [...this.sources.values()].map(source => `| ${cell(source.source.id)} | ${cell(source.source.title)} | ${cell(source.source.path)} | ${source.digest} | ${cell(source.source.limitations.join("；"))} |`).join("\n");
   }
-  async calculate(input: SourceCalculation) {
+  async calculate(input: SourceCalculation, onSaved?: (ids: string[]) => void) {
     const sources = await this.refresh(), source = sources.get(input.source_id);
     if (!source) throw new Error("来源不在当前目录中");
-    return calculationMarkdown(await saveCalculation(this.p, source, input));
+    const receipts=await saveGroupedCalculations(this.p,source,input);
+    onSaved?.(receipts.map(receipt => receipt.id));
+    const summary = receipts.slice(0, 5).map(receipt => calculationMarkdown(receipt)).join("\n\n---\n\n");
+    return `${summary}${receipts.length > 5 ? `\n\n已保存全部 ${receipts.length} 组，以上展示前 5 组摘要。其他记录用 read_calculation_catalog 分页读取；完整序列均已保存。` : ""}`;
+  }
+  private async receipt(id: string) {
+    if (!/^calc-[a-f0-9]{64}$/.test(id)) throw new Error("计算记录编号无效，请使用 calculate 返回的编号");
+    const receipt = JSON.parse(await readFile(await safePath(projectDir(this.p.id), `state/calculations/${id}.json`), "utf8")) as CalculationReceipt;
+    const source = (await this.refresh()).get(receipt.request.source_id);
+    if (!source) throw new Error("计算来源不在当前研究范围");
+    const fresh = buildCalculation(source, receipt.request);
+    if (fresh.id !== id || hash(fresh) !== hash(receipt)) throw new Error("来源或计算记录已变化，请重新核验计算");
+    return { receipt: fresh, source };
+  }
+  async calculationCatalog(offset = 0, limit = 10) {
+    if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1 || limit > 20) throw new Error("offset 为非负整数，limit 为 1–20");
+    const files = (await readdir(path.join(projectDir(this.p.id), "state/calculations")).catch((error: NodeJS.ErrnoException) => { if (error.code === "ENOENT") return []; throw error; })).filter(file => /^calc-[a-f0-9]{64}\.json$/.test(file)).sort();
+    const page: string[] = [];
+    for (const file of files.slice(offset, offset + limit)) {
+      const r = JSON.parse(await readFile(await safePath(projectDir(this.p.id), `state/calculations/${file}`), "utf8")) as CalculationReceipt;
+      if (this.sources.get(r.request.source_id)?.digest === r.source_digest) page.push(calculationMarkdown((await this.receipt(r.id)).receipt));
+    }
+    return `计算记录目录：offset=${offset}，limit=${limit}，已扫描 ${Math.min(offset + limit, files.length)}/${files.length}；仅列出当前来源且通过复算核验的记录。${offset + limit < files.length ? `下一页 offset=${offset + limit}` : "扫描完成"}\n\n${page.join("\n\n") || "本页没有当前来源的有效计算记录"}`;
+  }
+  async readCalculation(id: string, offset = 0, limit = 50) {
+    if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error("offset 为非负整数，limit 为 1–100");
+    const { receipt } = await this.receipt(id);
+    // Pagination affects inspection only; saved facts always receive the complete series.
+    return JSON.stringify({ ...receipt, result: { ...receipt.result, details: undefined, series: receipt.result.series.slice(offset, offset + limit) }, series_count: receipt.result.series.length, offset, limit, path: `state/calculations/${id}.json` });
+  }
+  async saveComputedFacts(markdown: string, baseRevision?: string, replaceId?: string) {
+    return this.serialized(async () => {
+      const prior = await this.current();
+      if (prior && baseRevision !== prior.revision) throw new Error(`草稿版本已变化；先 read_analysis_draft，再使用当前版本 ${prior.revision}`);
+      if (prior && !prior.parsed) throw new Error("先修复现有 Markdown 草稿格式，再追加计算事实");
+      const narrative = parseComputedNarratives(markdown), facts: Fact[] = [...(prior?.parsed?.data.facts ?? [])];
+      const ids = new Set(facts.map(fact => fact.id));
+      const replacement = replaceId === undefined ? -1 : facts.findIndex(fact => fact.id === replaceId);
+      if (replaceId !== undefined && (replacement < 0 || facts[replacement].derivation !== "computed" || narrative.facts.length !== 1 || narrative.facts[0].id !== replaceId))
+        throw new Error("patch_computed_fact 必须引用一条已有 computed 事实，叙述编号须与 fact_id 相同");
+      const batchIds = new Set<string>();
+      for (const [index, note] of narrative.facts.entries()) {
+        if (!note.id?.trim()) throw new Error(`第 ${index + 1} 条叙述的编号为空；填写非空且唯一的编号，本批未保存`);
+        if (batchIds.has(note.id)) throw new Error(`本批第 ${index + 1} 条叙述编号 ${note.id} 重复；每条使用不同编号，本批未保存`);
+        if (ids.has(note.id) && note.id !== replaceId) throw new Error(`事实编号 ${note.id} 已存在，本批未保存。当前草稿版本：${prior!.revision}。先 read_analysis_draft(fact_id="${note.id}")；若已保存则继续其他事实或提交 draft_revision；修正计算叙述用 patch_computed_fact(revision="${prior!.revision}", fact_id="${note.id}", markdown=单条计算叙述模板)。完整事实也可用 patch_analysis_fact；不要原样追加。`);
+        batchIds.add(note.id);
+        ids.add(note.id);
+        const { receipt: r, source } = await this.receipt(note.calculation_id);
+        const block = source.blocks.find(block => block.id === r.request.block_id)!;
+        const { calculation_id, ...authored } = note;
+        const fact: Fact = { ...authored, derivation: "computed", value: r.result.value, unit: r.unit,
+          series: r.result.series, source_ids: [r.request.source_id],
+          evidence: [{ source_id: r.request.source_id, quote: block.text, location: r.request.block_id }],
+          specification: { calculation_id, scope: `${r.request.block_id}${r.selection_scope ? `；${r.selection_scope}` : "；完整证据块"}`, measure: r.measure, breakdown: r.breakdown, focus: r.result.focus, method: r.result.method, aggregation: r.result.aggregation as Fact["specification"]["aggregation"], series_unit: r.series_unit, distribution_kind: note.type === "distribution" ? r.request.operation === "histogram" ? "numeric" : "categorical" : "none" },
+        };
+        if (replacement >= 0) facts[replacement] = fact;
+        else facts.push(fact);
+      }
+      const draft = await this.persist(renderDocument("analyst", { summary: prior?.parsed?.data.summary ?? narrative.summary, facts }, prior?.parsed?.notes ?? ""));
+      if (draft.issues.length) throw new AnalysisValidationError(draft.issues, this.description(draft));
+      return this.description(draft);
+    });
   }
   async readEvidence(sourceId: string, query = "", offset = 0, limit = 8, blockId?: string) {
     const sources = await this.refresh(), source = sources.get(sourceId);
@@ -120,7 +188,7 @@ export class AnalystWorkbench {
     const ranked = source.blocks.filter(block => !blockId || block.id === blockId).map((block, index) => ({ block, index, score: terms.filter(term => block.text.toLowerCase().includes(term)).length }));
     if (query) ranked.sort((a, b) => b.score - a.score || a.index - b.index);
     const blocks = ranked.slice(offset, offset + limit).map(item => item.block);
-    return evidenceMarkdown(source, blocks) + `\n共 ${ranked.length} 块；本页 offset=${offset}，limit=${limit}。查询仅帮助排序，不改变证据匹配规则。证据较长时可直接读取完整视图：${this.directory}/evidence-${hash(sourceId)}.md\n`;
+    return evidenceMarkdown(source, blocks) + `\n## 计算参数提示\n${JSON.stringify(blocks.map(block=>calculationTableGuide(source,block.id)).filter(Boolean))}\n` + `\n共 ${ranked.length} 块；本页 offset=${offset}，limit=${limit}。查询仅帮助排序，不改变证据匹配规则。证据较长时可直接读取完整视图：${this.directory}/evidence-${hash(sourceId)}.md\n`;
   }
   async readDraft(factId?: string) {
     const draft = await this.current();

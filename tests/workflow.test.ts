@@ -29,6 +29,19 @@ async function sample() {
   return p;
 }
 try {
+  await test("invalidation records the current trigger without borrowing an earlier design-operation reason", async () => {
+    const p = await sample();
+    p.execution = { mode: "redesign", reason: "Old unrelated palette change", at: store.now() };
+    await store.save(p);
+    const orchestrator = new Orchestrator(fixtureRunner);
+    await orchestrator.invalidate(p.id, "researcher", "上传资料已更新");
+    let updated = await store.get(p.id);
+    assert.equal(updated.state.invalidation?.reason, "上传资料已更新");
+    assert.deepEqual(updated.state.invalidation?.affected, ["researcher", "analyst", "designer", "builder"]);
+    await orchestrator.invalidate(p.id, "designer");
+    updated = await store.get(p.id);
+    assert.equal(updated.state.invalidation?.reason, "Manual stage rerun");
+  });
   await test("Pi 1.4.0 public model runtime and native Skill discovery", async () => {
     const rt = await runtime();
     assert.ok(rt.getModel("openai", "gpt-5.4"));

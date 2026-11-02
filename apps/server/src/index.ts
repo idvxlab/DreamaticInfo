@@ -1,3 +1,5 @@
+import { readSample } from "./visual-sample.js";
+import { executionIntent } from "./execution-intent.js";
 import { DesignerWorkbench, readDesignProgress } from "./designer-workbench.js";
 import { AnalystWorkbench, readAnalysisProgress } from "./analyst-workbench.js";
 import { readProgress, readableSource } from "./research-state.js";
@@ -134,7 +136,7 @@ app.patch("/api/projects/:id", async (req, res) => {
   p.brief = req.body.brief.trim();
   p.messages.push({ role: "user", text: p.brief, at: now() });
   await save(p);
-  await orchestrator.invalidate(p.id, "chatbot");
+  await orchestrator.invalidate(p.id, "chatbot", "项目需求已更新");
   await log(p.id, "Brief updated; downstream invalidated");
   res.json(await detail(await get(p.id)));
 });
@@ -154,7 +156,7 @@ app.post(
         Buffer.from(file.originalname, "latin1").toString("utf8"),
         file.buffer,
       );
-    await orchestrator.invalidate(p.id, "researcher");
+    await orchestrator.invalidate(p.id, "researcher", "上传资料已更新");
     res.json(await detail(await get(p.id)));
   },
 );
@@ -173,25 +175,46 @@ app.post("/api/projects/:id/messages", async (req, res) => {
     ? `${p.brief}\n补充：${req.body.text.trim()}`
     : req.body.text.trim();
   await save(p);
-  await orchestrator.invalidate(p.id, "chatbot");
+  await orchestrator.invalidate(p.id, "chatbot", "项目需求已更新");
   void orchestrator.start(p.id);
   res.json({ ok: true });
 });
 app.post("/api/projects/:id/run", async (req, res) => {
+  idle(req.params.id);
   const p = await get(req.params.id);
   if (!p.brief.trim() && p.mode === "live") throw new Error("请先描述项目需求");
+  p.execution = executionIntent(p, "continue", "Explicit run/continue operation");
+  await save(p);
   void orchestrator.start(p.id);
   res.status(202).json({ ok: true });
+});
+app.post("/api/projects/:id/model-budget", async (req, res) => {
+  await orchestrator.addModelBudget(req.params.id, req.body.amount);
+  res.json(await detail(await get(req.params.id)));
 });
 app.post("/api/projects/:id/pause", async (req, res) => {
   await get(req.params.id);
   await orchestrator.pause(req.params.id);
   res.json({ ok: true });
 });
+app.post("/api/projects/:id/design-operation", async (req, res) => {
+  idle(req.params.id);
+  const mode = req.body.mode;
+  if (!["repair", "redesign"].includes(mode) || typeof req.body.reason !== "string" || !req.body.reason.trim()) throw new Error("请明确操作模式及修复问题或重新设计目标");
+  const p = await get(req.params.id);
+  if (p.state.stages.analyst.status !== "completed") throw new Error("需要正式事实后才能修复或重新设计");
+  const owner = req.body.owner ?? "builder";
+  if (mode === "repair" && !roles.includes(owner)) throw new Error("Unknown repair owner");
+  p.execution = executionIntent(p, mode, req.body.reason);
+  await save(p);
+  await orchestrator.invalidate(p.id, mode === "redesign" ? "designer" : owner, `${mode === "redesign" ? "重新设计" : "局部修复"}：${req.body.reason.trim()}`);
+  void orchestrator.start(p.id);
+  res.status(202).json({ ok: true });
+});
 app.post("/api/projects/:id/rerun", async (req, res) => {
   idle(req.params.id);
   if (!roles.includes(req.body.role)) throw new Error("Invalid role");
-  await orchestrator.invalidate(req.params.id, req.body.role as Role);
+  await orchestrator.invalidate(req.params.id, req.body.role as Role, "用户主动重新执行阶段");
   void orchestrator.start(req.params.id);
   res.json({ ok: true });
 });
@@ -239,9 +262,15 @@ app.put("/api/projects/:id/artifact/:role", async (req, res) => {
     parsed.markdown,
   );
   const nextRole = roles[roles.indexOf(role) + 1];
-  if (nextRole) await orchestrator.invalidate(id, nextRole);
+  if (nextRole) await orchestrator.invalidate(id, nextRole, "上游正式报告已编辑");
   await log(id, `user updated ${role}; downstream invalidated`);
   res.json(await detail(await get(id)));
+});
+app.get("/api/projects/:id/sample", async (req, res) => {
+  const p = await get(req.params.id), version = p.state.visual_sample?.version;
+  if (!version || !/^[a-f0-9]{64}$/.test(version)) { res.status(404).send("尚无实际样稿"); return; }
+  res.setHeader("Content-Security-Policy", `sandbox allow-scripts; ${previewCsp}`);
+  res.type("html").send(await readSample(projectDir(p.id), p.state.visual_sample!));
 });
 app.get("/api/projects/:id/preview", async (req, res) => {
   const p = await get(req.params.id),
@@ -334,6 +363,10 @@ app.get("/api/projects/:id/research/sources/:sourceId/:format", async (req, res)
   if (req.params.format === "text" && source.status === "accepted") { res.type("text").send(await readableSource(p, source)); return; }
   const file = req.params.format === "raw" ? source.raw_path : req.params.format === "rendered" ? source.rendered_path : source.source?.path;
   if (!file) { res.status(404).json({ error: "尚未取得响应内容" }); return; }
+  if (req.params.format === "raw" && source.acquisition) {
+    await readableSource(p,source);
+    res.type("application/octet-stream").attachment(`${source.source?.id ?? source.id}.source`).send(await readFile(await safePath(projectDir(p.id),file)));return;
+  }
   res.type("text").send(await readFile(await safePath(projectDir(p.id), file), "utf8"));
 });
 app.get("/api/projects/:id/source/:sourceId", async (req, res) => {

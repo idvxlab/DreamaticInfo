@@ -326,7 +326,7 @@ try {
       scope: "fixture",
       data_requirements: "fixture",
       story_direction: "fixture",
-      visual_preferences: "fixture",
+      visual_constraints: [], visual_preferences: "fixture",
       constraints: [],
     };
     for (const limit of [1, 2]) {

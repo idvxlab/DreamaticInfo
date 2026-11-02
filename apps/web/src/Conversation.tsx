@@ -17,11 +17,21 @@ interface Props {
   onSend: (text?: string) => Promise<void>;
   onPause: () => void;
   onContinue: () => void;
+  onAddModelBudget?: (amount: number) => void;
   onRerun: (role: Role) => void;
   onPreview: () => void;
 }
 const statuses: Record<string, string> = { pending: "等待执行", running: "正在执行", completed: "已完成", failed: "执行失败", interrupted: "已中断" };
 function time(value: string) { return new Date(value).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }); }
+
+function modelProgress(project: ProjectDetail, role: Role) {
+  const activity = project.model_activity;
+  if (!activity || activity.role !== role) return undefined;
+  const phases = { waiting: "等待模型响应", text: "模型正在生成文字", tool_arguments: "模型正在组织工具参数", processing: "模型正在处理请求", tool: "正在执行工具", finished: "模型已完成本次输出" };
+  const elapsed = Math.max(0, Math.floor((Date.now() - Date.parse(activity.started_at)) / 1000));
+  if (activity.phase === "tool") return `正在执行工具 · 本次执行 ${elapsed} 秒`;
+  return `${phases[activity.phase]} · 本次调用 ${elapsed} 秒 · 已输出 ${activity.output_characters.toLocaleString()} 字符${project.analysis_progress?.counts.saved ? ` · 已保存 ${project.analysis_progress.counts.saved} 条事实` : ""}`;
+}
 
 function StageCard({ project, role, events, pending, onRerun }: { project: ProjectDetail; role: Role; events: ConversationEvent[]; pending: boolean; onRerun: () => void }) {
   const stage = project.state.stages[role], running = stage.status === "running";
@@ -29,12 +39,13 @@ function StageCard({ project, role, events, pending, onRerun }: { project: Proje
   useEffect(() => { setOpen(running || stage.status === "failed"); }, [stage.status, running]);
   const result = project.stage_results?.[role];
   const actions = events.filter(event => event.role === role && (!stage.completed_at || stage.status !== "completed" || Date.parse(event.at) <= Date.parse(stage.completed_at)));
+  const progressText = modelProgress(project, role) || actions.at(-1)?.text || "正在处理本阶段任务…";
   return <div className={`workflow-node workflow-agent-node ${stage.status}`}>
     <span className="workflow-dot">{running ? <Loader2 size={13} className="spin" /> : stage.status === "completed" ? <Check size={13} /> : <Bot size={13} />}</span>
     <details className="workflow-agent-card" open={open} onToggle={event => { if (event.target === event.currentTarget) setOpen(event.currentTarget.open); }}>
-      <summary><span><strong>{roleNames[role]} · {roleLabels[role]}</strong><small title="启动次数包含首次执行、恢复执行、重新执行和自动重试，不代表文献读取次数。">{stage.status === "interrupted" && stage.error === "用户暂停任务" ? "已暂停" : statuses[stage.status]}{stage.attempts > 0 && ` · 第 ${stage.attempts} 次启动`}{stage.completed_at && stage.status === "completed" && ` · ${time(stage.completed_at)}`}</small>{running && <small className="workflow-progress-preview">{actions.at(-1)?.text || "正在处理本阶段任务…"}</small>}</span><ChevronDown size={14} /></summary>
+      <summary><span><strong>{roleNames[role]} · {roleLabels[role]}</strong><small title="启动次数包含首次执行、恢复执行、重新执行和自动重试，不代表文献读取次数。">{stage.status === "interrupted" && stage.error === "用户暂停任务" ? "已暂停" : statuses[stage.status]}{stage.attempts > 0 && ` · 第 ${stage.attempts} 次启动`}{stage.completed_at && stage.status === "completed" && ` · ${time(stage.completed_at)}`}</small>{running && <small className="workflow-progress-preview">{progressText}</small>}</span><ChevronDown size={14} /></summary>
       <div className="workflow-agent-body">
-        {running && <section className="workflow-agent-progress" role="status"><h4><Loader2 size={11} className="spin" /> 当前进展</h4><p>{actions.at(-1)?.text || "正在处理本阶段任务…"}</p></section>}
+        {running && <section className="workflow-agent-progress" role="status"><h4><Loader2 size={11} className="spin" /> 当前进展</h4><p>{progressText}</p></section>}
         {actions.length > 0 && <details className="workflow-action-log"><summary>执行记录 · {actions.length}</summary><div className="nested-stream">{actions.map((event, i) => <div className="workflow-tool" key={`${event.at}-${i}`}><Wrench size={11} /><p>{event.text}</p><time>{time(event.at)}</time></div>)}</div></details>}
         {result && <><section className="workflow-result"><h4>阶段结果</h4><p>{result.summary || "本阶段已完成，正式产物已保存。"}</p></section>{result.notes && <details className="workflow-agent-output"><summary>智能体输出</summary><p>{result.notes}</p></details>}<div className="workflow-file-links">{["md"].map(ext => <a key={ext} href={`/api/projects/${project.id}/document/${documentNames[role]}.${ext}`} target="_blank" rel="noreferrer">{documentNames[role]}.{ext}<ArrowUpRight size={11} /></a>)}</div></>}
         {stage.error && !(pendingQuestion(project) && role === "chatbot") && <p className="workflow-error" role="alert">{stage.error}</p>}
@@ -47,6 +58,9 @@ function StageCard({ project, role, events, pending, onRerun }: { project: Proje
 export default function Conversation(props: Props) {
   const { project, events, text, setText, files, setFiles, disabled, pending, error, clearError, onSend, onPause, onContinue, onRerun, onPreview } = props;
   const running = project?.state.status === "running";
+  const budget = project?.state.execution_budget;
+  const modelUsed = budget?.model ?? 0, modelLimit = budget?.model_task_limit ?? 120;
+  const modelExhausted = !!budget && modelUsed >= modelLimit;
   const scrollRef = useRef<HTMLDivElement>(null), fileRef = useRef<HTMLInputElement>(null), follow = useRef(true), readingTop = useRef(0);
   const [dismissed, setDismissed] = useState<string>(), [answer, setAnswer] = useState("");
   const questionMessage = pendingQuestion(project), question = questionMessage?.at !== dismissed ? questionMessage?.question : undefined;
@@ -63,9 +77,12 @@ export default function Conversation(props: Props) {
     <div className="agent-scroll" ref={scrollRef} onScroll={event => { const el = event.currentTarget; readingTop.current = el.scrollTop; follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 72; }}>
       {!entries.length ? <section className="agent-intro"><p className="eyebrow">LET’S MAKE SENSE OF DATA</p><h2>你想讲述什么？</h2><p>告诉我你的主题与目标受众，上传已有资料。没有数据，也可以从一个问题开始。</p><div className="suggestions">{["分析这份数据，发现值得讲述的趋势", "为公众设计一张清晰的研究信息图"].map(s => <button disabled={disabled} key={s} onClick={() => setText(s)}>{s}</button>)}</div></section> : <div className="workflow-stream">
         {entries.map(entry => entry.kind === "stage" && project ? <StageCard key={`${project.id}-${entry.key}`} project={project} role={entry.role} events={events} pending={pending} onRerun={() => onRerun(entry.role)} /> : entry.kind === "message" ? <div className={`workflow-message-row ${entry.message.role}`} key={entry.key}><div className="workflow-message-bubble"><small>{entry.message.role === "user" ? "你" : "信息设计团队"} · {time(entry.at)}</small><p>{entry.message.text}</p></div></div> : null)}
-        {project?.state.status === "completed" && project.has_html && <section className="completion-summary" aria-label="项目完成摘要"><strong><Check size={14} /> 信息图已完成</strong><p>{project.research?.sources.length ?? 0} 个来源 · {project.datafacts?.facts.length ?? 0} 条数据事实 · {project.design?.components.length ?? 0} 个设计组件</p><div><button onClick={onPreview}>查看作品<ArrowUpRight size={12} /></button><a href={`/api/projects/${project.id}/html`} download>下载 HTML</a></div></section>}
+        {project?.state.status === "completed" && project.has_html && <section className={`completion-summary${project.state.visual_review?.status === "needs_revision" ? " needs-revision" : ""}`} aria-label="项目完成摘要"><strong><Check size={14} /> {project.state.visual_review?.status === "needs_revision" ? "作品已生成 · 视觉验收未通过" : "信息图已完成"}</strong><p>{project.research?.sources.length ?? 0} 个来源 · {project.datafacts?.facts.length ?? 0} 条数据事实 · {project.design?.components.length ?? 0} 个设计组件</p><div><button onClick={onPreview}>查看作品<ArrowUpRight size={12} /></button><a href={`/api/projects/${project.id}/html`} download>下载 HTML</a></div></section>}
       </div>}
-      {project && entries.length > 0 && !running && !question && ["failed", "interrupted"].includes(project.state.status) && <button className="clarification-submit" disabled={pending} onClick={onContinue}><Play size={12} />继续执行</button>}
+      {project && entries.length > 0 && !running && !question && ["failed", "interrupted"].includes(project.state.status) && <button className="clarification-submit" disabled={pending || modelExhausted} onClick={onContinue}><Play size={12} />继续执行</button>}
+      {budget && <section className="model-budget-summary" aria-label="模型调用额度"><p>模型调用：任务累计 {modelUsed} / {modelLimit} 次 · 本次运行 {budget.run_model ?? "—"} / {budget.model_run_limit ?? 120} 次</p>
+        {modelExhausted && !running && props.onAddModelBudget && <><p>任务累计额度已用完。追加只增加调用额度，可能产生模型费用；保留历史用量、费用与返修限制。</p><button type="button" className="clarification-submit" disabled={pending} onClick={() => props.onAddModelBudget?.(40)}>追加 40 次模型额度</button><small>追加后点击“继续执行”启动任务。</small></>}
+      </section>}
       {project?.state.error && !project.state.current_stage && !question && <p className="workflow-error" role="alert">{project.state.error}</p>}
     </div>
     <div className="composer-wrap">

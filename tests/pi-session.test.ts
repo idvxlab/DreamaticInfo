@@ -26,7 +26,7 @@ await test(
       scope: "2021–2024",
       data_requirements: "CSV",
       story_direction: "growth",
-      visual_preferences: "warm gray",
+      visual_constraints: [], visual_preferences: "warm gray",
       constraints: [],
     };
     let declared: string[] = [];

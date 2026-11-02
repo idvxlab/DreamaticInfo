@@ -499,6 +499,11 @@ export default function App() {
                       </div>
                     )}
                   </div>
+                  {project.state.visual_review?.status === "needs_revision" && <div className="visual-review-notice" role="status">
+                    <strong>作品已生成，视觉验收未通过</strong>
+                    <p>自动返修额度已用完。作品仍可预览和导出，以下问题尚待处理：</p>
+                    <ul>{project.state.visual_review.issues.map(issue => <li key={issue.id}>{issue.component} · {issue.owner}：{issue.message}</li>)}</ul>
+                  </div>}
                   {project.performance && <PerformancePanel performance={project.performance} />}
                   {project.has_html ? (
                     <div className="preview-frame">
@@ -597,7 +602,7 @@ export default function App() {
             <footer className="canvas-footer">
               <span>
                 <span className="tiny-dot" />{" "}
-                {project ? project.state.status === "interrupted" && project.state.error === "用户暂停任务" ? "已暂停" : statusLabel[project.state.status] : "准备就绪"}
+                {project ? project.state.status === "completed" && project.state.visual_review?.status === "needs_revision" ? "视觉验收未通过" : project.state.status === "interrupted" && project.state.error === "用户暂停任务" ? "已暂停" : statusLabel[project.state.status] : "准备就绪"}
               </span>
               <span>DATA FACTS → DATA STORYTELLING → INFORMATION DESIGN</span>
               <span>Dreamatic · Info</span>
@@ -622,6 +627,11 @@ export default function App() {
             onContinue={() => void act(async () => {
               await api(`/projects/${id}/run`, { method: "POST" });
               await refresh(id!);
+            })}
+            onAddModelBudget={amount => void act(async () => {
+              await api(`/projects/${id}/model-budget`, { method: "POST", body: JSON.stringify({ amount }) });
+              await refresh(id!);
+              setNotice(`已追加 ${amount} 次模型调用额度；点击继续执行以恢复任务`);
             })}
             onRerun={role => void act(async () => {
               await api(`/projects/${id}/rerun`, { method: "POST", body: JSON.stringify({ role }) });

@@ -1,3 +1,4 @@
+import { ACQUISITION_VERSION } from "./source-registry.js";
 import { setting } from "./config-store.js";
 import path from "node:path";
 import { readFile, mkdir } from "node:fs/promises";
@@ -7,7 +8,7 @@ import { hash } from "./validation.js";
 const queues = new Map<string, Promise<unknown>>();
 export async function researchScope(p: Project) {
   const intent = await readArtifact(p, "chatbot");
-  return hash({ brief: p.brief, uploads: p.uploads.map(u => [u.id, u.sha256]), intent: intent?.data ?? null, body_threshold: setting("DREAMATIC_SOURCE_MIN_TEXT_CHARS") });
+  return hash({ acquisition: ACQUISITION_VERSION, brief: p.brief, uploads: p.uploads.map(u => [u.id, u.sha256]), intent: intent?.data ?? null, body_threshold: setting("DREAMATIC_SOURCE_MIN_TEXT_CHARS"), acquisition_config: ["DREAMATIC_ACQUISITION_MAX_ROWS", "DREAMATIC_ACQUISITION_TIMEOUT_MS"].map(key => setting(key)) });
 }
 export function progressPath(p: Project, scope: string) {
   return path.join(projectDir(p.id), "research", "runs", scope, "progress.json");
@@ -39,5 +40,17 @@ export async function readableSource(p: Project, entry: ResearchProgress["source
   if (entry.status !== "accepted" || !entry.source || !entry.content_hash) throw new Error("该来源尚无可用正文");
   const text = await readFile(await safePath(projectDir(p.id), entry.source.path), "utf8");
   if (hash(text) !== entry.content_hash) throw new Error("已保存正文与采集摘要不一致，请重新采集");
+  if (entry.acquisition) {
+    if(entry.acquisition.material_path) {
+      const material=await readFile(await safePath(projectDir(p.id),entry.acquisition.material_path));
+      if(hash(material.toString("base64"))!==entry.acquisition.material_hash)throw new Error("选定数据文件与采集摘要不一致");
+    }
+    if (entry.acquisition.catalog_path) {
+      const catalog=await readFile(await safePath(projectDir(p.id),entry.acquisition.catalog_path),"utf8");
+      if(hash(catalog)!==entry.acquisition.catalog_hash)throw new Error("来源元数据与采集摘要不一致");
+    }
+    const raw = await readFile(await safePath(projectDir(p.id), entry.acquisition.raw_path));
+    if (hash(raw.toString("base64")) !== entry.acquisition.raw_hash) throw new Error("原始数据与采集摘要不一致，请重新采集");
+  }
   return text;
 }

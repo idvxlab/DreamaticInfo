@@ -1,3 +1,6 @@
+import { readModelActivity } from "./model-activity.js";
+import { sampleComparison } from "./visual-sample.js";
+import { assetObservations } from "./asset-observation.js";
 import { performanceSummary } from "./run-metrics.js";
 import { embedVisualizationRuntime } from "./visualization-runtime.js";
 import { readDesignProgress } from "./designer-workbench.js";
@@ -28,7 +31,7 @@ import {
 import { hash, names, validate } from "./validation.js";
 export const ROOT = path.resolve(CONFIG_ROOT, setting("DREAMATIC_WORKSPACE"));
 export const now = () => new Date().toISOString();
-export async function atomic(file: string, value: string) {
+export async function atomic(file: string, value: string | Uint8Array) {
   await mkdir(path.dirname(file), { recursive: true });
   const tmp = `${file}.${randomUUID()}.tmp`;
   await writeFile(tmp, value);
@@ -235,11 +238,15 @@ export async function detail(p: Project): Promise<ProjectDetail> {
   }
   return {
     ...p,
+    state: p.state.status !== "running" && p.state.execution_budget ? { ...p.state, execution_budget: { ...p.state.execution_budget, model_run_limit: Number(setting("DREAMATIC_MODEL_RUN_LIMIT")), model_task_limit: Number(setting("DREAMATIC_MODEL_TASK_LIMIT")) + (p.state.execution_budget.model_extra_limit ?? 0) } } : p.state,
     ...data,
     stage_results,
     retained_documents: (await readdir(projectDir(p.id))).filter(file => roles.some(role => file === `${names[role]}.md` && !p.state.stages[role].version)),
+    model_activity: await readModelActivity(projectDir(p.id), p),
     performance: await performanceSummary(projectDir(p.id)),
     research_progress: await readProgress(p),
+    sample_comparison: await sampleComparison(projectDir(p.id), p.state.visual_sample, builder?.data.html),
+    asset_observations: await assetObservations(projectDir(p.id)),
     analysis_progress: await readAnalysisProgress(p, data.research, data.intent),
     design_progress: await readDesignProgress(p, data),
     has_html: !!builder,

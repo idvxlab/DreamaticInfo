@@ -62,7 +62,7 @@ try {
     // Simulate an agent holding the old checkpoint while a user edits display metadata.
     const old = await store.get(p.id);
     await renameProject(p.id, " 我的阅读故事 ");
-    const intent = { title: "AI generated title", topic: "阅读", objective: "分析变化", audience: "公众", scope: "测试数据", data_requirements: "CSV", story_direction: "趋势", visual_preferences: "清晰", constraints: [] };
+    const intent = { title: "AI generated title", topic: "阅读", objective: "分析变化", audience: "公众", scope: "测试数据", data_requirements: "CSV", story_direction: "趋势", visual_constraints: [], visual_preferences: "清晰", constraints: [] };
     await store.commit(
       old,
       "chatbot",

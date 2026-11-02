@@ -33,6 +33,37 @@
       "items": {
         "type": "string"
       }
+    },
+    "visual_constraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requirement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "user",
+              "reference",
+              "brand",
+              "default"
+            ]
+          },
+          "basis": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requirement",
+          "origin",
+          "basis"
+        ]
+      }
     }
   },
   "required": [
@@ -44,6 +75,7 @@
     "data_requirements",
     "story_direction",
     "visual_preferences",
-    "constraints"
+    "constraints",
+    "visual_constraints"
   ]
 }

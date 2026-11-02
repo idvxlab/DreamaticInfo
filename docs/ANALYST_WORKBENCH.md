@@ -44,3 +44,102 @@ Existing 1.8-second detail polling and SSE refresh update saved state. Pause/fai
 The initial implementation passed 84 tests, covering verbatim evidence, changed numbers/years/units, cross-block rejection, combined diagnostics, invalid-draft persistence, local append/repair, revision protection, source/intent invalidation, progress budgets and native Pi against a local deterministic provider. API/UI tests later covered read-only polling, paused drafts, malformed documents and formal switching.
 
 The isolated tests/fixtures/analysis-preview.mts browser script checks filters, automatic updates and wide/narrow layouts after build; it deletes only its temporary project. No external paid model or user project was rerun. See [VALIDATION.md](VALIDATION.md) for current totals and real-provider limitations.
+
+## Calculation contract feedback
+
+read_evidence appends deterministic table hints: source/block IDs, table kind,
+zero-based columns and whether the original-row header option applies. Official
+API/JSON tables already have explicit headers; first_row_header must be omitted
+or false. The true option remains restricted to verified first-row headers in
+system-numbered original spreadsheet tables. An invalid option returns its exact
+correction and columns, without changing data or dropping the first observation.
+
+Analyst calculation/evidence tools use categorized corrective feedback and the
+existing three-identical-rejection guard. Difference helpers require exactly two
+values; unbound helpers never produce formal source receipts. Draft preflight and
+formal submission retain their existing independent repair budgets and source
+integrity checks. Unexpected errors still fail explicitly.
+
+## Explicit grouped trend calculations
+
+calculate has disjoint source-bound and auxiliary argument schemas. Source mode
+requires source_id/block_id/label_column and excludes values/labels/paired_values;
+auxiliary mode cannot carry source location or grouping controls. Runtime validation
+also identifies conflicting fields so non-schema callers cannot bypass the rule.
+Native schema rejection is displayed as actionable parameter feedback.
+
+For source trend only, group_columns explicitly enumerates entity/dimension columns
+and time_order=ascending explicitly requests chronological sorting. The server
+partitions every observed group, validates every partition, and returns a separate
+receipt for each group. It does not allow model-supplied group_values at the tool
+boundary. Each receipt retains its group key, original row locations, ordering and
+observation count. All groups must validate before receipts are saved. Missing
+group keys/numbers, duplicate times within a group and invalid dates are rejected;
+no observations are dropped, averaged or interpolated. The existing ungrouped
+calculation path keeps its strict source-order behavior.
+
+Computed grouped facts must include the receipt's exact selection_scope in their
+statistical scope. Formal verification reconstructs the group and sorting from the
+original evidence block and rechecks the result, receipt hash and selected scope.
+A group cannot be presented as the whole population. Evidence hints report column
+cardinality/observed values and whether time values are unique ascending,
+descending or repeated/mixed, without choosing the analytical scope for the model.
+
+## Bounded latency and compact computed narratives
+
+Calculation returns retain only receipt metadata, the core result, units, method,
+group scope, series count and receipt path. At most five group summaries are
+returned per call; every validated group and observation is still persisted.
+read_calculation_catalog paginates current-source receipts and verifies them from
+source before reuse. read_calculation paginates series for inspection; the complete
+receipt remains readable at its project-relative path. These are internal receipts,
+not another model-authored handoff.
+
+save_computed_facts accepts 1–3 model-authored narratives in Markdown. The template
+contains summary and fact ID/title/type/description/analysis/context/importance,
+confidence, relationships and calculation_id. Unknown numeric/evidence fields are
+rejected. The server verifies the current receipt and inserts exact value, units,
+complete series, source references, an actual evidence block and specification.
+It renders the canonical Analyst Markdown, persists an immutable revision, and
+runs the existing preflight. Full schema, references, evidence and deterministic
+recomputation still run at formal submission. No quoted/inferred/forecast claim
+is automatically generated. read_analysis_format provides their complete format.
+Existing facts require local patching; append batches require the current revision
+and cannot overwrite previous IDs. Narratives retain professional responsibility
+for interpretation, scope, limitations, confidence and relationships.
+
+Model metadata records request start, first/last nonempty stream delta, phase,
+message-context characters and output characters; characters are not tokens and
+input counts exclude the system prompt/tool schemas. Thinking content, streamed
+text and tool arguments are never copied into these observation files. UI polling
+shows waiting/text/tool-argument/processing/tool phases. Activity snapshots are
+serialized and throttled, and are hidden after the stage stops or its attempt
+changes. Native Pi sessions retain their existing trace storage independently.
+
+DREAMATIC_MODEL_IDLE_TIMEOUT_MS defaults to 90000. Empty stream envelopes do not
+refresh it. DREAMATIC_MODEL_CALL_TIMEOUT_MS defaults to 180000 and also bounds
+continuous output; tool execution suspends both model clocks. Analyst additionally
+uses DREAMATIC_ANALYST_PROGRESS_TIMEOUT_MS=240000 across model calls/tools. Only a
+new persisted receipt or a changed saved draft resets that clock; repeated reads,
+identical receipts and previously seen draft content do not. All values are
+configurable initial limits, not measured optimal thresholds. Stage/run deadlines
+and budgets remain outer bounds. Interruption aborts the current session and keeps
+saved receipts/revisions; user continuation restores them without an automatic
+paid model rerun. Recovering historical unsaved model text remains unsupported.
+
+Performance observations include first saved fact from effective request time,
+maximum model duration/context characters, total output characters, durable progress,
+recovery and distinct timeout reasons. Compare identical inputs, model settings and
+quality requirements before making real-provider speedup claims.
+
+## Computed narrative repair
+
+Duplicate append diagnostics identify the rejected fact ID, current revision and
+recovery actions; blank IDs and duplicates within a batch have separate messages.
+Rejected batches do not replace the saved draft. Read the existing fact before
+retrying: an already saved fact can proceed to submission without another append.
+`patch_computed_fact` accepts revision, fact_id and one compact narrative using the
+same template as save_computed_facts. It requires an existing computed fact and a
+matching ID, rechecks the receipt, fills server-owned fields and preserves every
+other fact and the report summary. Full fact repairs retain patch_analysis_fact.
+The durable-progress timeout remains independent and unchanged.
